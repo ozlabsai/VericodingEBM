@@ -193,7 +193,7 @@ export default function HeroPerLineFigure() {
                   />
                 )}
                 {has && (
-                  <span className={`absolute inset-0 flex items-center justify-end pr-1.5 text-[9px] tabular font-medium ${isTop ? 'text-bg0' : 'text-bg0'}`}>
+                  <span className={`absolute inset-0 flex items-center justify-end pr-1.5 text-[9px] tabular font-medium ${isTop ? 'text-bg0' : 'text-text0'}`}>
                     {energy!.toFixed(2)}
                   </span>
                 )}
