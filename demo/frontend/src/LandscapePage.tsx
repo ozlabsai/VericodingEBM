@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import EnergyLandscape, { type LandscapeExample } from './EnergyLandscape'
 import LineEditor from './LineEditor'
-import { fetchEnergyField, descend, type EnergyField, type ScoreLineResponse, type Trajectory } from './api'
+import CorruptionLab from './CorruptionLab'
+import { fetchEnergyField, descend, IS_STATIC_MODE, type EnergyField, type ScoreLineResponse, type Trajectory } from './api'
 
 const SAMPLE_SPEC = `fn add(a: u32, b: u32) -> (s: u32)
     requires a + b < u32::MAX,
@@ -204,11 +205,20 @@ export default function LandscapePage() {
               Red dots are buggy lines (in line scope) or fail impls (in impl scope).
             </div>
           </div>
-          <LineEditor
-            initialSpec={SAMPLE_SPEC}
-            initialImpl={SAMPLE_IMPL}
-            onScored={handleScored}
+          <CorruptionLab
+            onProject={(xy, energy, label) => {
+              setUserBall({ x: xy[0], y: xy[1], energy })
+              setTrajectory(null); setTrajStep(0)
+              setScoreInfo(`${label} · E=${energy.toFixed(3)}`)
+            }}
           />
+          {!IS_STATIC_MODE && (
+            <LineEditor
+              initialSpec={SAMPLE_SPEC}
+              initialImpl={SAMPLE_IMPL}
+              onScored={handleScored}
+            />
+          )}
           {scoreInfo && (
             <div className="bg-panel border border-border rounded p-2 text-xs text-zinc-400">
               {scoreInfo}
