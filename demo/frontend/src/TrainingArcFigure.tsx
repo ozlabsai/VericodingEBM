@@ -76,22 +76,22 @@ export default function TrainingArcFigure() {
         {[0.5, 0.7, 0.9].map(v => (
           <g key={v}>
             <line x1={PAD.left} x2={W - PAD.right} y1={yAt(v)} y2={yAt(v)}
-                  stroke="oklch(26% 0.012 250)" strokeDasharray="2 4" />
+                  stroke="oklch(86% 0.012 285)" strokeDasharray="2 4" />
             <text x={PAD.left - 8} y={yAt(v)} dy="0.32em" textAnchor="end"
-                  fontFamily="Geist Mono" fontSize="10" fill="oklch(50% 0.010 250)" className="tabular">{v.toFixed(1)}</text>
+                  fontFamily="JetBrains Mono" fontSize="10" fill="oklch(54% 0.030 285)" className="tabular">{v.toFixed(1)}</text>
           </g>
         ))}
 
         {/* Track labels */}
         <text x={W - PAD.right + 8} y={yAt(RUNS[RUNS.length - 1].top3)} dy="0.32em"
-              fontFamily="Geist Mono" fontSize="10" fill="oklch(70% 0.008 250)" className="tabular">top-3</text>
+              fontFamily="JetBrains Mono" fontSize="10" fill="oklch(38% 0.045 285)" className="tabular">top-3</text>
         <text x={W - PAD.right + 8} y={yAt(RUNS[RUNS.length - 1].auroc) + 14} dy="0.32em"
-              fontFamily="Geist Mono" fontSize="10" fill="oklch(78% 0.155 152)" className="tabular">AUROC</text>
+              fontFamily="JetBrains Mono" fontSize="10" fill="oklch(62% 0.180 27)" className="tabular">AUROC</text>
 
         {/* Lines */}
         <path d={top3Path}
               fill="none"
-              stroke="oklch(70% 0.008 250)"
+              stroke="oklch(38% 0.045 285)"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -102,7 +102,7 @@ export default function TrainingArcFigure() {
               }}/>
         <path d={aurocPath}
               fill="none"
-              stroke="oklch(78% 0.155 152)"
+              stroke="oklch(62% 0.180 27)"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -125,34 +125,34 @@ export default function TrainingArcFigure() {
               {/* vertical guide on hover */}
               {active && (
                 <line x1={xAt(i)} x2={xAt(i)} y1={PAD.top} y2={PAD.top + innerH}
-                      stroke="oklch(34% 0.012 250)" strokeWidth="1" />
+                      stroke="oklch(78% 0.015 285)" strokeWidth="1" />
               )}
               {/* top-3 dot */}
               <circle cx={xAt(i)} cy={yAt(r.top3)} r={active ? 4 : 3}
-                      fill="oklch(13% 0.010 250)"
-                      stroke="oklch(70% 0.008 250)" strokeWidth="1.5"
+                      fill="oklch(97% 0.004 285)"
+                      stroke="oklch(38% 0.045 285)" strokeWidth="1.5"
                       style={{ transition: 'r 200ms cubic-bezier(0.23,1,0.32,1)' }} />
               {/* AUROC dot */}
               <circle cx={xAt(i)} cy={yAt(r.auroc)} r={active ? 4 : 3}
-                      fill="oklch(13% 0.010 250)"
-                      stroke="oklch(78% 0.155 152)" strokeWidth="1.5"
+                      fill="oklch(97% 0.004 285)"
+                      stroke="oklch(62% 0.180 27)" strokeWidth="1.5"
                       style={{ transition: 'r 200ms cubic-bezier(0.23,1,0.32,1)' }} />
               {/* x label: run id */}
               <text x={xAt(i)} y={H - PAD.bottom + 18} textAnchor="middle"
-                    fontFamily="Geist Mono" fontSize="10"
-                    fill={active ? 'oklch(98% 0.003 250)' : 'oklch(50% 0.010 250)'}
+                    fontFamily="JetBrains Mono" fontSize="10"
+                    fill={active ? 'oklch(15% 0.060 285)' : 'oklch(54% 0.030 285)'}
                     className="tabular">#{r.id}</text>
               {/* codename below */}
               <text x={xAt(i)} y={H - PAD.bottom + 32} textAnchor="middle"
-                    fontFamily="Geist" fontSize="10" fontWeight="500"
-                    fill={active ? 'oklch(92% 0.005 250)' : 'oklch(70% 0.008 250)'}>
+                    fontFamily="Clash Grotesk" fontSize="10" fontWeight="500"
+                    fill={active ? 'oklch(22% 0.055 285)' : 'oklch(38% 0.045 285)'}>
                 {r.codename}
               </text>
               {/* verdict tag (only for active) */}
               {active && (
                 <text x={xAt(i)} y={yAt(r.top3) - 14} textAnchor="middle"
-                      fontFamily="Geist Mono" fontSize="9"
-                      fill="oklch(98% 0.003 250)" className="tabular uppercase">
+                      fontFamily="JetBrains Mono" fontSize="9"
+                      fill="oklch(15% 0.060 285)" className="tabular uppercase">
                   {r.verdict}
                 </text>
               )}

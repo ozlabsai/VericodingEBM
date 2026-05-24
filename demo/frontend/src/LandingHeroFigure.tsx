@@ -109,22 +109,13 @@ export default function LandingHeroFigure() {
       const t = (performance.now() - start) / 1000
       ctx.clearRect(0, 0, size.w, size.h)
 
-      // Background radial wash so the figure has depth even when small
-      const g = ctx.createRadialGradient(
-        size.w * 0.5, size.h * 0.5, 0,
-        size.w * 0.5, size.h * 0.5, Math.max(size.w, size.h) * 0.7,
-      )
-      g.addColorStop(0, 'rgba(30, 40, 60, 0.45)')
-      g.addColorStop(1, 'rgba(14, 18, 24, 0)')
-      ctx.fillStyle = g
-      ctx.fillRect(0, 0, size.w, size.h)
-
-      // Mouse halo (subtle, just below points)
+      // Background — flat on light bg (no radial wash; would muddy the field)
+      // Mouse halo (warm accent tint, subtle)
       const m = mouseRef.current
       if (m.in) {
         const halo = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 120)
-        halo.addColorStop(0, 'rgba(255, 200, 120, 0.18)')
-        halo.addColorStop(1, 'rgba(255, 200, 120, 0)')
+        halo.addColorStop(0, 'rgba(233, 92, 75, 0.10)')   // Opal Flame at low alpha
+        halo.addColorStop(1, 'rgba(233, 92, 75, 0)')
         ctx.fillStyle = halo
         ctx.beginPath()
         ctx.arc(m.x, m.y, 120, 0, Math.PI * 2)
@@ -166,7 +157,7 @@ export default function LandingHeroFigure() {
       // Cursor label
       if (nearestPoint && nearestDist < cursorR2 * 4) {
         const [sx, sy] = toScreen(nearestPoint.x, nearestPoint.y)
-        ctx.strokeStyle = 'rgba(255, 200, 120, 0.5)'
+        ctx.strokeStyle = 'rgba(233, 92, 75, 0.85)'   // Opal Flame, opaque enough for light bg
         ctx.lineWidth = 1
         ctx.beginPath(); ctx.arc(sx, sy, 7, 0, Math.PI * 2); ctx.stroke()
         const label = `${nearestPoint.status.toUpperCase()} · E=${nearestPoint.whole_impl_energy.toFixed(2)}`

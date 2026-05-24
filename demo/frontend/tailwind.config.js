@@ -5,52 +5,49 @@ export default {
     extend: {
       colors: {
         // ─────────────────────────────────────────────────────────────────
-        // Palette: Bavarian Gentian (deep indigo) + Opal Flame (warm red).
-        // From the Suraj design boards. All values OKLCH; ramp is perceptually
-        // spaced (equal lightness deltas), chroma scales down toward extremes.
+        // LIGHT-MODE palette: Gram's Hair (off-white) anchor +
+        // Bavarian Gentian (deep indigo) for text + Opal Flame (warm red)
+        // for the single accent. From the Suraj design boards.
         //
-        // The dark anchor is dimmed from the source #20006D into the 12-22%
-        // lightness range so it reads as "near-black with an indigo soul"
-        // rather than as a saturated purple field. Hue 285 throughout for
-        // cohesion.
+        // The ramp goes light → dark for bg, dark → light for text.
+        // Hue 285 throughout so neutrals carry the same indigo undertone
+        // as the accent palette. Chroma kept tiny on neutrals.
         // ─────────────────────────────────────────────────────────────────
-        bg0:    'oklch(11% 0.045 285)',   // page background
-        bg1:    'oklch(15% 0.055 285)',   // panel / section
-        bg2:    'oklch(20% 0.065 285)',   // hover / pressed surface
-        line1:  'oklch(26% 0.055 285)',   // 1px hairline
-        line2:  'oklch(34% 0.055 285)',   // emphasised hairline
-        text3:  'oklch(58% 0.025 285)',   // muted text
-        text2:  'oklch(80% 0.020 285)',   // body text  (Violet Water-ish)
-        text1:  'oklch(93% 0.010 285)',   // high-emphasis text
-        text0:  'oklch(98% 0.005 285)',   // headlines  (Gram's Hair-ish)
+        bg0:    'oklch(97% 0.004 285)',   // page background  (~Gram's Hair #F5F6F7)
+        bg1:    'oklch(94% 0.006 285)',   // raised panel / sub-band
+        bg2:    'oklch(90% 0.010 285)',   // hover / pressed
+        line1:  'oklch(86% 0.012 285)',   // 1px hairline
+        line2:  'oklch(78% 0.015 285)',   // emphasised hairline
+        text3:  'oklch(54% 0.030 285)',   // muted text
+        text2:  'oklch(38% 0.045 285)',   // body text
+        text1:  'oklch(22% 0.055 285)',   // high-emphasis text
+        text0:  'oklch(15% 0.060 285)',   // headlines (Bavarian Gentian, dimmed)
 
-        // ONE accent — Opal Flame. High contrast on the indigo ramp; warm-red
-        // distinguishes it from the AI-default amber AND from the previous
-        // Lichen Green.
-        accent:    'oklch(70% 0.165 27)',  // ~#E95C4B
-        'accent-2':'oklch(78% 0.135 27)',
-        'accent-d':'oklch(60% 0.180 27)',
+        // ONE accent — Opal Flame. High contrast on off-white, warm-red
+        // distinguishes it from the AI-default cobalt-blue.
+        accent:    'oklch(62% 0.180 27)',  // a touch deeper than dark-mode use for AA contrast
+        'accent-2':'oklch(70% 0.160 27)',
+        'accent-d':'oklch(54% 0.195 27)',
 
         // Semantic — used only for state, not decoration.
-        // pos: Chilly Spice (warm pink) — softer than the accent so they coexist.
-        // neg: deep crimson — distinct from accent, reserved for failure/regression.
-        pos: 'oklch(80% 0.105 22)',        // ~#FD9989 (Chilly Spice)
-        neg: 'oklch(62% 0.190 18)',        // deep crimson, distinct from accent
+        // pos: a calm green (not the bright lichen) so it sits well against off-white
+        // neg: deep crimson, kept distinct from the accent in hue
+        pos: 'oklch(50% 0.140 152)',
+        neg: 'oklch(52% 0.205 18)',
 
-        // Legacy aliases (kept so older components still compile during
-        // gradual migration). All point into the indigo ramp.
-        ink:       'oklch(11% 0.045 285)',
-        'ink-2':   'oklch(15% 0.055 285)',
-        panel:     'oklch(20% 0.065 285)',
-        'panel-2': 'oklch(26% 0.055 285)',
-        border:    'oklch(26% 0.055 285)',
-        'border-2':'oklch(34% 0.055 285)',
-        muted:     'oklch(58% 0.025 285)',
-        body:      'oklch(80% 0.020 285)',
-        fg:        'oklch(93% 0.010 285)',
-        warm:      'oklch(62% 0.190 18)',
-        cool:      'oklch(72% 0.140 240)',
-        success:   'oklch(80% 0.105 22)',
+        // Legacy aliases.
+        ink:       'oklch(97% 0.004 285)',
+        'ink-2':   'oklch(94% 0.006 285)',
+        panel:     'oklch(94% 0.006 285)',
+        'panel-2': 'oklch(90% 0.010 285)',
+        border:    'oklch(86% 0.012 285)',
+        'border-2':'oklch(78% 0.015 285)',
+        muted:     'oklch(54% 0.030 285)',
+        body:      'oklch(38% 0.045 285)',
+        fg:        'oklch(15% 0.060 285)',
+        warm:      'oklch(52% 0.205 18)',
+        cool:      'oklch(50% 0.140 240)',
+        success:   'oklch(50% 0.140 152)',
       },
       fontFamily: {
         // Clash Grotesk via Fontshare (free, OFL-equivalent license).
