@@ -15,8 +15,10 @@ export default {
         bg2:    'oklch(92% 0 0)',
         line1:  'oklch(88% 0 0)',
         line2:  'oklch(78% 0 0)',
-        text3:  'oklch(56% 0 0)',
-        text2:  'oklch(38% 0 0)',
+        // text3 raised from 56% → 48% — 56% on 98% bg = 4.0:1 (WCAG fail for body).
+        // 48% gives 6.0:1, still clearly secondary but readable at 10–11px.
+        text3:  'oklch(48% 0 0)',
+        text2:  'oklch(34% 0 0)',
         text1:  'oklch(22% 0 0)',
         text0:  'oklch(14% 0 0)',   // near-black for headlines + CTAs
 

@@ -32,8 +32,10 @@ function useReveal<T extends HTMLElement>() {
 
 function Eyebrow({ n, children }: { n: string; children: React.ReactNode }) {
   return (
-    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text3 mb-3">
-      {n} · {children}
+    <div className="flex items-baseline gap-2.5 mb-4">
+      <span className="font-mono text-[12px] text-text3 tabular">{n}</span>
+      <span className="w-6 h-px bg-line2" />
+      <span className="text-text2 text-[13px] font-medium">{children}</span>
     </div>
   )
 }
@@ -46,51 +48,52 @@ function Hero() {
     <section className="border-b border-line1">
       <div className="max-w-[1400px] mx-auto px-6 pt-20 pb-16 grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-12 lg:gap-16 items-start">
         <div ref={lref} className="reveal">
-          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-text3 mb-7 max-w-md">
-            Apart × Atlas Computing<br/>
-            Secure Program Synthesis Hackathon · Track 3 · Vericoding
+          <div className="flex items-center gap-2 mb-8 text-[12px] text-text3">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-text2" />
+            <span>Apart × Atlas SPS Hackathon · Track 3 · Vericoding</span>
           </div>
-          <h1 className="font-display text-text0 leading-[1.0] tracking-tight mb-7 text-balance"
+          <h1 className="font-display text-text0 leading-[1.0] tracking-tight mb-8 text-balance"
               style={{ fontSize: 'clamp(2.4rem, 5.4vw, 4.6rem)', letterSpacing: '-0.035em' }}>
             Where to <em className="italic font-display">look</em> when verification&nbsp;fails.
           </h1>
-          <p className="text-text2 text-[17px] leading-[1.6] max-w-xl">
+          <p className="text-text2 text-[17px] leading-[1.55] max-w-xl">
             A 1.5B-parameter discriminative energy-based model that scores each
             line of a Verus implementation with an energy proxy for{' '}
-            <span className="text-text0">this line is the bug.</span> Trained on
+            <span className="text-text0 font-medium">this line is the bug.</span> Trained on
             the Microsoft Verus Training Data; evaluated against six static
-            baselines, five frontier LLMs, and in closed-loop CEGIS with the
-            Verus toolchain in the loop.
+            baselines, five frontier LLMs, and in closed-loop CEGIS.
           </p>
-          <div className="mt-9 flex flex-wrap items-center gap-3">
+
+          {/* Single primary CTA. Secondaries become text-links — clearly subordinate. */}
+          <div className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-3">
             <a href={withBase('/manifold')}
-               className="press group inline-flex items-center gap-2 px-4 py-3 rounded-md bg-accent text-white hover:bg-accent-d font-medium text-[15px]">
+               className="press group inline-flex items-center gap-2 pl-5 pr-4 py-3 rounded-md bg-accent text-white hover:bg-accent-d font-medium text-[15px] shadow-[0_1px_0_0_oklch(40%_0.15_268)]">
               Open the demo
-              <svg width="14" height="14" viewBox="0 0 12 12" className="transition-transform duration-200 group-hover:translate-x-0.5"><path d="M3 6h6m-3-3l3 3-3 3" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg width="14" height="14" viewBox="0 0 12 12" className="transition-transform duration-200 group-hover:translate-x-0.5"><path d="M3 6h6m-3-3l3 3-3 3" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </a>
             <a href="https://github.com/ozlabsai/VericodingEBM/blob/main/paper/main.pdf"
                target="_blank" rel="noreferrer"
-               className="press inline-flex items-center gap-1.5 px-4 py-3 rounded-md border border-line2 text-text1 hover:border-text2 hover:bg-bg1 text-[15px]">
+               className="press text-text1 hover:text-text0 text-[14px] inline-flex items-baseline gap-1.5 border-b border-line2 hover:border-text1 pb-0.5">
               Read the paper
-              <span className="font-mono text-[11px] text-text3">23pp</span>
+              <span className="text-text3 text-[12px]">23pp</span>
             </a>
             <a href="https://huggingface.co/OzLabs/VericodingEBM"
                target="_blank" rel="noreferrer"
-               className="press inline-flex items-center px-4 py-3 rounded-md border border-line2 text-text1 hover:border-text2 hover:bg-bg1 text-[15px]">
+               className="press text-text1 hover:text-text0 text-[14px] border-b border-line2 hover:border-text1 pb-0.5">
               HF weights
             </a>
           </div>
 
-          {/* Inline stat strip — small, beneath CTAs */}
-          <div className="mt-12 grid grid-cols-3 gap-6 max-w-lg">
+          {/* Inline stat strip — bigger numbers, smaller labels, tightened to feel like one unit */}
+          <div className="mt-14 pt-6 border-t border-line1 grid grid-cols-3 gap-8 max-w-lg">
             {[
               { v: '1,492',  u: 'dev-test impls' },
               { v: '17,168', u: 'scorable lines' },
               { v: '4',      u: 'checkpoints' },
             ].map(s => (
               <div key={s.u}>
-                <div className="tabular text-text0 text-2xl">{s.v}</div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text3 mt-0.5">{s.u}</div>
+                <div className="tabular text-text0 text-[28px] leading-none font-display tracking-tight">{s.v}</div>
+                <div className="text-text3 text-[12px] mt-2">{s.u}</div>
               </div>
             ))}
           </div>
@@ -98,13 +101,14 @@ function Hero() {
 
         <div ref={rref} className="reveal lg:pt-4">
           <LandingHeroFigure />
-          <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-text3 flex items-center gap-3 flex-wrap">
-            <span>● live</span>
-            <span className="text-line2">·</span>
-            <span>hover the map</span>
-            <span className="ml-auto">
-              <a href={withBase('/manifold')} className="press text-text2 hover:text-text0">explore the manifold →</a>
+          <div className="mt-4 text-[12px] text-text3 flex items-center gap-3 flex-wrap">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-text2 animate-pulse" />
+              Live · hover the map
             </span>
+            <a href={withBase('/manifold')} className="press ml-auto text-text1 hover:text-text0 border-b border-line2 hover:border-text1 pb-0.5">
+              Explore the manifold →
+            </a>
           </div>
         </div>
       </div>
@@ -142,20 +146,20 @@ function FindingsTable() {
         <div className="border-y border-line1">
           {rows.map((r, i) => (
             <div key={i} className={`grid grid-cols-12 gap-4 items-baseline py-5 ${i > 0 ? 'border-t border-line1' : ''}`}>
-              <div className="col-span-12 sm:col-span-4 text-text1 text-[15px]">{r.metric}</div>
+              <div className="col-span-12 sm:col-span-4 text-text1 text-[15px] font-medium">{r.metric}</div>
               <div className="col-span-4 sm:col-span-2 flex items-baseline gap-2">
-                <span className="tabular text-text0 text-2xl">{r.ours}</span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-text3">ours</span>
+                <span className="tabular text-text0 text-[26px] font-display tracking-tight leading-none">{r.ours}</span>
+                <span className="text-text3 text-[12px]">ours</span>
               </div>
               <div className="col-span-4 sm:col-span-3 flex items-baseline gap-2">
-                <span className="tabular text-text2 text-xl">{r.them}</span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-text3 truncate">{r.themL}</span>
+                <span className="tabular text-text2 text-[20px] leading-none">{r.them}</span>
+                <span className="text-text3 text-[12px] truncate">{r.themL}</span>
               </div>
               <div className="col-span-4 sm:col-span-3 text-right">
-                {r.verdict === 'us'   && <span className="inline-flex items-center px-2 py-0.5 rounded bg-text0 text-bg0 font-mono text-[10px] uppercase tracking-[0.12em]">We win</span>}
-                {r.verdict === 'them' && <span className="inline-flex items-center px-2 py-0.5 rounded bg-neg text-bg0 font-mono text-[10px] uppercase tracking-[0.12em]">LLM wins</span>}
-                {r.verdict === 'tied' && <span className="inline-flex items-center px-2 py-0.5 rounded border border-line2 text-text2 font-mono text-[10px] uppercase tracking-[0.12em]">Tied</span>}
-                {r.verdict === 'split'&& <span className="inline-flex items-center px-2 py-0.5 rounded border border-text2 text-text1 font-mono text-[10px] uppercase tracking-[0.12em]">Different axis</span>}
+                {r.verdict === 'us'   && <span className="inline-flex items-center px-2.5 py-1 rounded bg-text0 text-bg0 text-[12px] font-medium">We win</span>}
+                {r.verdict === 'them' && <span className="inline-flex items-center px-2.5 py-1 rounded bg-neg text-bg0 text-[12px] font-medium">LLM wins</span>}
+                {r.verdict === 'tied' && <span className="inline-flex items-center px-2.5 py-1 rounded border border-line2 text-text2 text-[12px]">Tied</span>}
+                {r.verdict === 'split'&& <span className="inline-flex items-center px-2.5 py-1 rounded border border-text2 text-text1 text-[12px] font-medium">Different axis</span>}
               </div>
             </div>
           ))}
@@ -256,19 +260,19 @@ function ArtifactsSection() {
         </div>
         <div className="border-y border-line1">
           {items.map((it, i) => (
-            <div key={i} className={`grid grid-cols-12 gap-6 items-baseline py-6 ${i > 0 ? 'border-t border-line1' : ''}`}>
-              <div className="col-span-12 sm:col-span-2 font-mono text-[10px] uppercase tracking-[0.14em] text-text3">
+            <div key={i} className={`grid grid-cols-12 gap-6 items-baseline py-7 ${i > 0 ? 'border-t border-line1' : ''}`}>
+              <div className="col-span-12 sm:col-span-2 font-mono text-[12px] text-text3 tabular">
                 {it.tag}
               </div>
               <div className="col-span-12 sm:col-span-3">
-                <div className="text-text0 text-lg tracking-tight">{it.label}</div>
+                <div className="text-text0 text-[17px] font-medium tracking-tight">{it.label}</div>
               </div>
-              <div className="col-span-12 sm:col-span-5 text-text2 text-[14px] leading-relaxed">
+              <div className="col-span-12 sm:col-span-5 text-text2 text-[14px] leading-[1.55]">
                 {it.body}
               </div>
               <div className="col-span-12 sm:col-span-2 text-right">
                 <a href={it.href} target="_blank" rel="noreferrer"
-                   className="press inline-flex items-center font-mono text-[11px] text-text1 hover:text-text0">
+                   className="press inline-flex items-center font-mono text-[12px] text-text1 hover:text-text0 border-b border-line2 hover:border-text1 pb-0.5">
                   {it.text} →
                 </a>
               </div>
@@ -308,9 +312,9 @@ function MethodBlock() {
         </div>
         <dl className="border-y border-line1">
           {ROWS.map((r, i) => (
-            <div key={i} className={`grid grid-cols-[160px_1fr] gap-6 items-baseline py-3.5 ${i > 0 ? 'border-t border-line1' : ''}`}>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3">{r.k}</dt>
-              <dd className={`text-text1 text-[15px] ${r.mono ? 'font-mono' : ''}`}>{r.v}</dd>
+            <div key={i} className={`grid grid-cols-[160px_1fr] gap-6 items-baseline py-4 ${i > 0 ? 'border-t border-line1' : ''}`}>
+              <dt className="text-text3 text-[13px]">{r.k}</dt>
+              <dd className={`text-text1 text-[15px] ${r.mono ? 'font-mono text-[13px]' : ''}`}>{r.v}</dd>
             </div>
           ))}
         </dl>
@@ -331,9 +335,9 @@ function Closing() {
           <span className="text-text3 italic">No model load. No&nbsp;backend.</span>
         </h2>
         <a href={withBase('/manifold')}
-           className="press inline-flex items-center gap-2 px-4 py-3 rounded-md bg-accent text-white hover:bg-accent-d font-medium text-[15px] whitespace-nowrap">
+           className="press group inline-flex items-center gap-2 pl-5 pr-4 py-3 rounded-md bg-accent text-white hover:bg-accent-d font-medium text-[15px] whitespace-nowrap shadow-[0_1px_0_0_oklch(40%_0.15_268)]">
           Open the demo
-          <svg width="14" height="14" viewBox="0 0 12 12"><path d="M3 6h6m-3-3l3 3-3 3" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <svg width="14" height="14" viewBox="0 0 12 12" className="transition-transform duration-200 group-hover:translate-x-0.5"><path d="M3 6h6m-3-3l3 3-3 3" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </a>
       </div>
     </section>
@@ -343,14 +347,14 @@ function Closing() {
 function Footer() {
   return (
     <footer>
-      <div className="max-w-[1400px] mx-auto px-6 py-8 flex flex-wrap items-center gap-x-6 gap-y-3 font-mono text-[10px] uppercase tracking-[0.14em] text-text3">
+      <div className="max-w-[1400px] mx-auto px-6 py-10 flex flex-wrap items-center gap-x-5 gap-y-3 text-[13px] text-text3">
         <span>MIT</span><span className="text-line2">·</span>
         <span>Guy Nachshon · Oz Labs</span><span className="text-line2">·</span>
         <span>Apart × Atlas SPS Hackathon · Track 3 · May 2026</span>
-        <span className="ml-auto flex gap-4">
-          <a href="https://github.com/ozlabsai/VericodingEBM" target="_blank" rel="noreferrer" className="press hover:text-text1">github</a>
-          <a href="https://huggingface.co/OzLabs/VericodingEBM" target="_blank" rel="noreferrer" className="press hover:text-text1">hf model</a>
-          <a href="https://huggingface.co/datasets/OzLabs/VericodingEBM-data" target="_blank" rel="noreferrer" className="press hover:text-text1">hf data</a>
+        <span className="ml-auto flex gap-5">
+          <a href="https://github.com/ozlabsai/VericodingEBM" target="_blank" rel="noreferrer" className="press hover:text-text1">GitHub</a>
+          <a href="https://huggingface.co/OzLabs/VericodingEBM" target="_blank" rel="noreferrer" className="press hover:text-text1">HF Model</a>
+          <a href="https://huggingface.co/datasets/OzLabs/VericodingEBM-data" target="_blank" rel="noreferrer" className="press hover:text-text1">HF Data</a>
         </span>
       </div>
     </footer>
