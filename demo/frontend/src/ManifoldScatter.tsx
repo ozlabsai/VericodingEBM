@@ -27,7 +27,12 @@ type Props = {
 }
 
 function hex2rgb(s: string): [number, number, number] {
-  // d3 returns "rgb(r, g, b)" — parse it.
+  // d3-scale-chromatic v3 returns "#rrggbb"; older versions returned
+  // "rgb(r, g, b)". Handle both.
+  if (s.charCodeAt(0) === 35) {  // '#'
+    const v = parseInt(s.slice(1), 16)
+    return [(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff]
+  }
   const m = s.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/)
   if (m) return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])]
   return [128, 128, 128]

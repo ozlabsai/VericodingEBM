@@ -27,8 +27,13 @@ type CanvasSize = { w: number; h: number }
 
 // Inferno colormap matches the demo's ManifoldScatter (d3 interpolateInferno).
 // Low energy → near-black indigo; high energy → bright yellow.
+// d3-scale-chromatic v3 returns "#rrggbb"; v2 returned "rgb(r, g, b)" — handle both.
 function energyToRgb(t: number): [number, number, number] {
   const s = interpolateInferno(Math.max(0, Math.min(1, t)))
+  if (s.charCodeAt(0) === 35) {
+    const v = parseInt(s.slice(1), 16)
+    return [(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff]
+  }
   const m = s.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/)
   if (!m) return [128, 128, 128]
   return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])]
