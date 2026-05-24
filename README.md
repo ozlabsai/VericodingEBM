@@ -7,6 +7,8 @@ A 1.5B-parameter discriminative energy-based model (Qwen2.5-Coder-1.5B + LoRA, s
 Submitted to the Apart × Atlas Computing **Secure Program Synthesis Hackathon, Track 3 (Vericoding)**.
 
 📄 **Paper:** [`paper/main.pdf`](paper/main.pdf) (22 pages)
+🤗 **Model:** [`OzLabs/VericodingEBM`](https://huggingface.co/OzLabs/VericodingEBM) (LoRA adapter + heads, 523 MB)
+🤗 **Data:** [`OzLabs/VericodingEBM-data`](https://huggingface.co/datasets/OzLabs/VericodingEBM-data) (training corpora, 365 MB)
 ⚡ **5-minute demo:** see [Quickstart](#quickstart-5-min-no-gpu-no-api) below
 
 ---
@@ -130,16 +132,33 @@ All analyses run from released JSONLs in `artifacts/` — no GPU, no API key.
 
 ---
 
+## Model + data downloads
+
+Both are on the Hugging Face Hub:
+
+```python
+from huggingface_hub import snapshot_download
+
+# Trained model (LoRA adapter + per-line head + scalar head, ~523 MB)
+ckpt_dir = snapshot_download("OzLabs/VericodingEBM")
+
+# Training corpora (~365 MB total across 4 JSON / JSONL files)
+data_dir = snapshot_download("OzLabs/VericodingEBM-data", repo_type="dataset")
+```
+
+The model expects the Qwen2.5-Coder-1.5B-Instruct base, which `transformers` downloads automatically on first load.
+
 ## Training (GPU)
 
 For completeness — not needed to reproduce paper analyses.
 
 ```bash
 uv sync
+# Drop the four data files from OzLabs/VericodingEBM-data into data/raw/ first.
 uv run python scripts/train.py --config configs/run10_hybrid.yaml
 ```
 
-Runs on a single H100 (80GB); ~4 hours wall-clock for the canonical config. Checkpoints land in `checkpoints/` (gitignored).
+Runs on a single H100 (80 GB); ~4 hours wall-clock for the canonical config. Checkpoints land in `checkpoints/` (gitignored).
 
 ---
 
