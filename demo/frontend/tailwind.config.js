@@ -4,40 +4,56 @@ export default {
   theme: {
     extend: {
       colors: {
-        // OKLCH neutrals tinted slightly warm so the surface doesn't read as the
-        // default cold-blue SaaS dark.
-        ink:        'oklch(15% 0.012 250)',
-        'ink-2':    'oklch(18% 0.012 250)',
-        panel:      'oklch(22% 0.014 250)',
-        'panel-2':  'oklch(26% 0.016 250)',
-        border:     'oklch(32% 0.018 250)',
-        'border-2': 'oklch(40% 0.020 250)',
-        muted:      'oklch(58% 0.015 250)',
-        body:       'oklch(78% 0.012 250)',
-        fg:         'oklch(96% 0.005 250)',
+        // Committed monochrome OKLCH ramp. Hue 250 (very slight cool tint),
+        // chroma kept low so neutrals stay neutral. Single accent below.
+        // Stops chosen perceptually (~equal lightness deltas), not arbitrary hex.
+        bg0:    'oklch(13% 0.010 250)',
+        bg1:    'oklch(16% 0.010 250)',
+        bg2:    'oklch(20% 0.012 250)',
+        line1:  'oklch(26% 0.012 250)',
+        line2:  'oklch(34% 0.012 250)',
+        text3:  'oklch(50% 0.010 250)',
+        text2:  'oklch(70% 0.008 250)',
+        text1:  'oklch(92% 0.005 250)',
+        text0:  'oklch(98% 0.003 250)',
 
-        // Brand accent: amber-orange, committed (not the AI-default cold-blue).
-        accent:     'oklch(74% 0.165 65)',
-        'accent-2': 'oklch(82% 0.140 65)',
-        'accent-d': 'oklch(58% 0.180 50)',
+        // ONE accent. Lichen Green — high contrast on the cool dark ramp,
+        // not the AI-default purple/blue, not the previous amber.
+        accent:    'oklch(78% 0.155 152)',
+        'accent-d':'oklch(62% 0.165 152)',
+        'accent-2':'oklch(86% 0.140 152)',
 
-        // Semantic
-        warm:       'oklch(64% 0.190 25)',
-        cool:       'oklch(72% 0.140 220)',
-        success:    'oklch(72% 0.155 152)',
+        // Semantic — used only for state, not decoration.
+        pos: 'oklch(78% 0.155 152)',   // success / model-wins
+        neg: 'oklch(66% 0.180 27)',    // fail / regression
+
+        // Legacy aliases (kept so non-landing pages still compile during the
+        // gradual migration). All point into the new monochrome ramp.
+        ink:       'oklch(13% 0.010 250)',
+        'ink-2':   'oklch(16% 0.010 250)',
+        panel:     'oklch(20% 0.012 250)',
+        'panel-2': 'oklch(26% 0.012 250)',
+        border:    'oklch(26% 0.012 250)',
+        'border-2':'oklch(34% 0.012 250)',
+        muted:     'oklch(50% 0.010 250)',
+        body:      'oklch(70% 0.008 250)',
+        fg:        'oklch(92% 0.005 250)',
+        warm:      'oklch(66% 0.180 27)',
+        cool:      'oklch(72% 0.140 220)',
+        success:   'oklch(78% 0.155 152)',
       },
       fontFamily: {
-        sans: ['"Inter Tight"', '-apple-system', 'BlinkMacSystemFont', 'Inter', '"Segoe UI"', 'system-ui', 'sans-serif'],
-        serif: ['"Instrument Serif"', 'ui-serif', 'Georgia', 'serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        sans: ['Geist', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       letterSpacing: {
-        'editorial': '-0.04em',
-        'tight-x':   '-0.015em',
+        'editorial': '-0.045em',
+        'crisp':     '-0.018em',
       },
       transitionTimingFunction: {
-        'out-expo':  'cubic-bezier(0.16, 1, 0.3, 1)',
-        'out-quart': 'cubic-bezier(0.25, 1, 0.5, 1)',
+        // Emil's strong ease-out and ease-in-out
+        'out-strong':    'cubic-bezier(0.23, 1, 0.32, 1)',
+        'in-out-strong': 'cubic-bezier(0.77, 0, 0.175, 1)',
       },
     },
   },

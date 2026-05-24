@@ -20,10 +20,10 @@ type Pin = {
 }
 
 const PINS: Pin[] = [
-  { name: 'Sentinel-Reliant',  delta: +47, side: 'bottom', variantClass: 'text-warm', emphasis: true },
-  { name: 'EPA-Stack',         delta: -47, side: 'top',    variantClass: 'text-accent' },
-  { name: 'Hybrid-Averse',     delta: -52, side: 'top',    variantClass: 'text-success', emphasis: true },
-  { name: 'Frontier LLMs',     delta:   0, side: 'bottom', variantClass: 'text-body' },
+  { name: 'Sentinel-Reliant',  delta: +47, side: 'bottom', variantClass: 'text-neg',     emphasis: true },
+  { name: 'EPA-Stack',         delta: -47, side: 'top',    variantClass: 'text-text1' },
+  { name: 'Hybrid-Averse',     delta: -52, side: 'top',    variantClass: 'text-accent',  emphasis: true },
+  { name: 'Frontier LLMs',     delta:   0, side: 'bottom', variantClass: 'text-text2' },
 ]
 
 const SCALE_MIN = -60
@@ -52,40 +52,40 @@ export default function LandingRegimeFigure() {
     <div ref={containerRef} className="relative w-full">
       {/* Three regime labels above the axis */}
       <div className="grid grid-cols-3 gap-2 mb-2 text-center font-mono text-[10px] uppercase tracking-[0.18em]">
-        <div className="text-success">marker-averse<br/><span className="text-muted normal-case tracking-normal">signal IMPROVES when marker stripped</span></div>
-        <div className="text-body/80">marker-invariant<br/><span className="text-muted normal-case tracking-normal">±5pp swing</span></div>
-        <div className="text-warm">marker-reliant<br/><span className="text-muted normal-case tracking-normal">signal COLLAPSES without marker</span></div>
+        <div className="text-accent">marker-averse<br/><span className="text-text3 normal-case tracking-normal">signal improves when marker stripped</span></div>
+        <div className="text-text2">marker-invariant<br/><span className="text-text3 normal-case tracking-normal">±5pp swing</span></div>
+        <div className="text-neg">marker-reliant<br/><span className="text-text3 normal-case tracking-normal">signal collapses without marker</span></div>
       </div>
 
       {/* The axis itself: thick line with regime bands underneath */}
       <div className="relative h-44">
         {/* Regime bands */}
         <div className="absolute inset-x-0 top-[78px] h-2 flex">
-          <div className="flex-1 rounded-l bg-success/15" />
-          <div className="w-[40px] hatch" />
-          <div className="flex-1 rounded-r bg-warm/15" />
+          <div className="flex-1 rounded-l bg-accent/15" />
+          <div className="w-[40px] bg-text3/10" />
+          <div className="flex-1 rounded-r bg-neg/15" />
         </div>
         {/* Center invariant band — narrow strip ±5pp around zero */}
         {(() => {
           const left = xForDelta(-5)
           const right = xForDelta(5)
           return (
-            <div className="absolute top-[76px] h-3 bg-body/15 border-y border-body/25"
+            <div className="absolute top-[76px] h-3 bg-text3/15 border-y border-text3/25"
                  style={{ left: `${left}%`, width: `${right - left}%` }} />
           )
         })()}
 
         {/* Tick marks every 20pp */}
         {[-60, -40, -20, 0, 20, 40, 60].map(t => (
-          <div key={t} className="absolute font-mono text-[9px] text-muted tabular-display"
+          <div key={t} className="absolute font-mono text-[9px] text-text3 tabular"
                style={{ left: `${xForDelta(t)}%`, top: '92px', transform: 'translateX(-50%)' }}>
-            <div className="w-px h-2 bg-border mx-auto mb-1" />
+            <div className="w-px h-2 bg-line2 mx-auto mb-1" />
             {t === 0 ? '0' : t > 0 ? `+${t}` : t}
           </div>
         ))}
-        <div className="absolute font-mono text-[10px] uppercase tracking-[0.18em] text-muted"
+        <div className="absolute font-mono text-[10px] uppercase tracking-[0.18em] text-text3"
              style={{ left: '50%', top: '120px', transform: 'translateX(-50%)' }}>
-          Δ top-1 recall when // FAILS markers stripped <span className="normal-case tracking-normal text-muted/70">(percentage points)</span>
+          Δ top-1 recall when // FAILS markers stripped <span className="normal-case tracking-normal text-text3/70">(percentage points)</span>
         </div>
 
         {/* Pins */}
