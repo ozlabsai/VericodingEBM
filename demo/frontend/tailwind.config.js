@@ -20,12 +20,12 @@ export default {
         text1:  'oklch(22% 0 0)',
         text0:  'oklch(14% 0 0)',   // near-black for headlines + CTAs
 
-        // No `accent`. Use text0 (near-black) where we used to use accent.
-        // These aliases stay so older components keep compiling, but they
-        // all resolve into the neutral ramp.
-        accent:    'oklch(14% 0 0)',
-        'accent-2':'oklch(22% 0 0)',
-        'accent-d':'oklch(0% 0 0)',
+        // Single accent — used ONLY for the primary CTA (Open the demo).
+        // Mid-saturation blue-violet, distinct from the cobalt default and
+        // distinct from the pastel cyan we tried earlier. Reserved.
+        accent:    'oklch(56% 0.190 268)',  // deep periwinkle
+        'accent-2':'oklch(64% 0.170 268)',
+        'accent-d':'oklch(48% 0.210 268)',
 
         // Semantic — kept ONLY for state inside data figures.
         warm:      'oklch(56% 0.190 25)',
