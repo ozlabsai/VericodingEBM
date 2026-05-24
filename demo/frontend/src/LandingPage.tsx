@@ -50,10 +50,9 @@ function Hero() {
             Apart × Atlas Computing<br/>
             Secure Program Synthesis Hackathon · Track 3 · Vericoding
           </div>
-          <h1 className="font-display text-text0 leading-[0.95] tracking-tight mb-7"
-              style={{ fontSize: 'clamp(2.6rem, 6vw, 5.2rem)', letterSpacing: '-0.035em' }}>
-            Where to <em className="italic font-display">look</em><br/>
-            when verification&nbsp;fails.
+          <h1 className="font-display text-text0 leading-[1.0] tracking-tight mb-7 text-balance"
+              style={{ fontSize: 'clamp(2.4rem, 5.4vw, 4.6rem)', letterSpacing: '-0.035em' }}>
+            Where to <em className="italic font-display">look</em> when verification&nbsp;fails.
           </h1>
           <p className="text-text2 text-[17px] leading-[1.6] max-w-xl">
             A 1.5B-parameter discriminative energy-based model that scores each
