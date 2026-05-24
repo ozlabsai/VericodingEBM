@@ -20,7 +20,7 @@ If A ~= C, the specialist is dominated by the LLM-self-judged baseline.
 
 Usage:
     OPENROUTER_API_KEY=... uv run python scripts/cegis_demo_3arm.py \\
-        --records artifacts/real_bugs/run10_stripped/eval_records.jsonl \\
+        --records artifacts/real_bugs/hybrid_averse_stripped/eval_records.jsonl \\
         --n 100 --verus /tmp/verus/verus-arm64-macos/verus \\
         --out artifacts/cegis/3arm_results.jsonl
 """

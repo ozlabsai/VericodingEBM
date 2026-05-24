@@ -11,7 +11,7 @@ Compares each baseline against run #10 stripped on the full real-bug corpus
 
 Usage:
     uv run python scripts/significance_tests.py \\
-        --target artifacts/real_bugs/run10_stripped/eval_records.jsonl \\
+        --target artifacts/real_bugs/hybrid_averse_stripped/eval_records.jsonl \\
         --baselines artifacts/baselines/length_records.jsonl \\
                     artifacts/baselines/keyword_verus_records.jsonl \\
                     artifacts/baselines/keyword_marker_records.jsonl \\

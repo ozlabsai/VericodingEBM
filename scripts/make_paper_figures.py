@@ -322,7 +322,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-dir", default="docs/figures", type=Path)
     ap.add_argument("--baselines-dir", default="artifacts/baselines", type=Path)
-    ap.add_argument("--run10", default="artifacts/real_bugs/run10_stripped/eval_records.jsonl",
+    ap.add_argument("--run10", default="artifacts/real_bugs/hybrid_averse_stripped/eval_records.jsonl",
                     type=Path)
     ap.add_argument("--train-history", default="artifacts/training/run10_train.jsonl", type=Path)
     ap.add_argument("--eval-history", default="artifacts/training/run10_eval.jsonl", type=Path)

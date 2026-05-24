@@ -26,7 +26,7 @@ rsync -avz --no-owner --no-group --delete-after \
   --exclude data/cache --exclude __pycache__ --exclude '*.pyc' \
   --exclude .pytest_cache --exclude .ruff_cache --exclude checkpoints \
   --exclude artifacts/baselines --exclude artifacts/stats --exclude artifacts/transfer \
-  --exclude artifacts/ochiai_baseline --exclude artifacts/run7_step500 \
+  --exclude artifacts/ochiai_baseline --exclude artifacts/sentinel_reliant \
   --exclude artifacts/ablations --exclude artifacts/training \
   --exclude demo --exclude review --exclude node_modules \
   -e "$RSYNC_RSH" \

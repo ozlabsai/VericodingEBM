@@ -9,7 +9,7 @@ in terms of input shape, only differing in the (lack of) localization signal.
 
 Usage:
     OPENROUTER_API_KEY=... uv run python scripts/cegis_rerun_arm_b.py \\
-        --records artifacts/real_bugs/run10_stripped/eval_records.jsonl \\
+        --records artifacts/real_bugs/hybrid_averse_stripped/eval_records.jsonl \\
         --orig artifacts/cegis/3arm_results.jsonl \\
         --raw-records artifacts/real_bugs/records.jsonl \\
         --verus /tmp/verus/verus-arm64-macos/verus \\

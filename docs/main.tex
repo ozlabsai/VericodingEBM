@@ -80,7 +80,7 @@ pairwise hinge on broken/fixed sibling pairs from the Microsoft
 Verus Training Data. After diagnosing a Qwen pretraining-prior
 leak through \texttt{// FAILS} comment-token embeddings in an
 earlier checkpoint and reworking the architecture around a scalar
-attention-pool head, our final model (run \#10) achieves
+attention-pool head, our final model (Hybrid-Averse) achieves
 AUROC $= 0.78$, top-1 $= 0.56$, top-3 $= 0.84$ on a hand-authored
 corpus of $609$ failing Verus tests scraped from
 \texttt{verus-lang/verus}. We compare against six static baselines
@@ -150,12 +150,12 @@ strip-FAILS audit pipeline that surfaced it.
   discrimination. Trained with within-spec InfoNCE plus
   within-implementation pairwise hinge, ListNet listwise
   cross-entropy, and FaceNet-style semi-hard negative mining. The
-  final model (run \#10) achieves AUROC $= 0.78$, top-1 $= 0.56$,
+  final model (Hybrid-Averse) achieves AUROC $= 0.78$, top-1 $= 0.56$,
   top-3 $= 0.84$ on the marker-stripped Verus dev-test corpus
   ($n=1{,}492$). \Cref{sec:methods,sec:results:headline,sec:results:run10-baselines}.
 \item \textbf{An architectural ablation isolating the load-bearing
   component.} Single-knob ablations attribute the $+30$pp AUROC
-  gain over an earlier LSE-aggregator design (run \#9) to the
+  gain over an earlier LSE-aggregator design (Counterfactual-Aug) to the
   scalar attention-pool head; listwise and semi-hard mining are
   non-trivial but secondary; logistic-vs-hinge is within noise
   (\Cref{app:marker-aug}, \Cref{tab:run10-ablation}).
@@ -349,10 +349,23 @@ ours is hand-authored failing tests from a single repository).
 \section{Results}
 \label{sec:results}
 
-\subsection{Specialist performance on the marker-stripped Verus dev-test corpus (run \#10)}
+\paragraph{Naming key.} Throughout the results we refer to four trained
+checkpoints by descriptive name:
+\textbf{Sentinel-Reliant} (pre-audit, LSE-aggregator architecture, leaks
+via the \texttt{// FAILS} marker);
+\textbf{Counterfactual-Mixed} (failed marker-augmentation attempt);
+\textbf{Counterfactual-Aug} (partial fix, adversarial-only marker
+injection);
+\textbf{Hybrid-Averse} (the final, hybrid scalar-head architecture
+reported as our canonical model);
+\textbf{EPA-Stack} (a post-deadline retry, listed only in the ablation
+footnote). Each corresponds to one row of the training log in
+\Cref{app:runs-brief}.
+
+\subsection{Specialist performance on the marker-stripped Verus dev-test corpus (Hybrid-Averse)}
 \label{sec:results:headline}
 
-Run \#10, our final hybrid scalar-head architecture, achieves
+Hybrid-Averse, our final hybrid scalar-head architecture, achieves
 \textbf{AUROC $= 0.78$, top-1 $= 0.56$, top-3 $= 0.84$} on $n=1{,}492$
 records ($609$ FAIL with labels) of the marker-stripped Verus
 dev-test corpus. The full baseline comparison table is in
@@ -360,16 +373,16 @@ dev-test corpus. The full baseline comparison table is in
 McNemar and DeLong significance tests against the strongest
 non-leak baseline are in \Cref{tab:significance}.
 
-An earlier development checkpoint (run \#7) appeared to reach
+An earlier development checkpoint (Sentinel-Reliant) appeared to reach
 top-3 $= 0.93$ on the same corpus; we document the audit that
 invalidated the strongest version of that claim, and the
-architectural fix that produced run \#10, in
+architectural fix that produced Hybrid-Averse, in
 \Cref{sec:results:strip-fails-audit}.
 
-\subsection{Run \#10 vs.\ static and learned baselines (canonical comparison)}
+\subsection{Hybrid-Averse vs.\ static and learned baselines (canonical comparison)}
 \label{sec:results:run10-baselines}
 
-To isolate how much of run \#10's signal is genuinely learned (versus
+To isolate how much of Hybrid-Averse's signal is genuinely learned (versus
 inherited from the Qwen pretraining prior, derivable from a regex, or
 explainable by trivial structural cues), we run six static, execution-free
 baselines on the marker-stripped Verus dev-test corpus ($n=1{,}492$,
@@ -414,13 +427,13 @@ paired McNemar (top-$k$) and DeLong (AUROC) significance tests.
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.95\linewidth]{fig_baseline_comparison.pdf}
-\caption{Run \#10 vs six static baselines on the marker-stripped Verus dev-test
+\caption{Hybrid-Averse vs six static baselines on the marker-stripped Verus dev-test
 corpus ($n=1{,}492$). Bars: AUROC (solid) and top-3 recall (faded);
 error bars are 95\% bootstrap CIs over 300 resamples. The marker-keyword
 baseline (\normalfont\textsc{Marker keywords$^*$}) attains top-$3=1.00$ by design
 (every record contains an authorial marker), but its impl-level AUROC of
-$0.67$ is still substantially below run \#10's $0.78$ (DeLong
-$p=0.006$). Run \#10 is the only method with both AUROC $>0.7$ and
+$0.67$ is still substantially below Hybrid-Averse's $0.78$ (DeLong
+$p=0.006$). Hybrid-Averse is the only method with both AUROC $>0.7$ and
 top-$3>0.8$.}
 \label{fig:baseline-comparison}
 \end{figure}
@@ -428,8 +441,8 @@ top-$3>0.8$.}
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.55\linewidth]{fig_roc_curves.pdf}
-\caption{ROC curves for whole-impl FAIL vs.\ PASS discrimination (run \#10
-stripped vs.\ four representative baselines). Run \#10 dominates uniformly
+\caption{ROC curves for whole-impl FAIL vs.\ PASS discrimination (Hybrid-Averse
+stripped vs.\ four representative baselines). Hybrid-Averse dominates uniformly
 at every false-positive rate.}
 \label{fig:roc-curves}
 \end{figure}
@@ -437,7 +450,7 @@ at every false-positive rate.}
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.75\linewidth]{fig_topk_curves.pdf}
-\caption{Per-line localization recall as a function of $k$. Run \#10 reaches
+\caption{Per-line localization recall as a function of $k$. Hybrid-Averse reaches
 top-$3=0.84$ where the strongest non-leak baseline (Verus keywords) needs
 $k=5$ to match. The marker-keyword leak ceiling saturates at $1.00$ for all
 $k\ge 1$ (and motivates the strip-FAILS audit).}
@@ -445,16 +458,16 @@ $k\ge 1$ (and motivates the strip-FAILS audit).}
 \end{figure}
 
 \paragraph{Headline finding.}
-Run \#10's AUROC of $0.78$ is $+18$pp over the frozen Qwen backbone
+Hybrid-Averse's AUROC of $0.78$ is $+18$pp over the frozen Qwen backbone
 ($0.60$; DeLong $p<10^{-5}$) and $+11$pp over the strongest non-leak
 baseline (\normalfont\textsc{Marker keyword}, $0.67$; DeLong $p=0.006$). On per-line
-top-$3$, run \#10 ($0.84$) beats every non-leak baseline by $\ge +7$pp; the
+top-$3$, Hybrid-Averse ($0.84$) beats every non-leak baseline by $\ge +7$pp; the
 margin over frozen Qwen surprisal is $+70$pp---\emph{finetuning does not
 just adjust the backbone, it teaches a capability (per-line bug
 localization) that the pretrained model does not have at all}.
 
 \paragraph{Honest reporting: top-$1$ vs.\ Verus keywords.}
-The one place where run \#10's superiority is not statistically clean is
+The one place where Hybrid-Averse's superiority is not statistically clean is
 top-$1$ against \normalfont\textsc{Verus keyword} ($0.560$ vs.\ $0.544$, McNemar
 $p=0.53$). Both methods rank assertion-like lines high, and the data
 contains enough such lines that point-estimate top-$1$ does not separate
@@ -474,7 +487,7 @@ capability is the bottlenecked one in the current setup.
 \label{sec:results:llm-zeroshot}
 
 We test five frontier LLMs via OpenRouter on the same marker-stripped
-Verus dev-test subset run \#10 is evaluated on ($n=220$:
+Verus dev-test subset Hybrid-Averse is evaluated on ($n=220$:
 $200$ FAIL $+ 20$ PASS, seed-fixed), with \emph{two} prompts:
 (a) a \textbf{per-line ranking} prompt that asks for the top-$5$
 most-suspicious line indices (\Cref{tab:llm-zeroshot}); (b) a
@@ -495,7 +508,7 @@ baseline-evaluation result.
 \centering
 \small
 \caption{\textbf{Per-line ranking.} Frontier LLMs zero-shot vs.\
-run \#10 on the same $n=220$ subset of the marker-stripped Verus
+Hybrid-Averse on the same $n=220$ subset of the marker-stripped Verus
 dev-test corpus, ranking-prompt. \textbf{Bold} = best in column.
 ``Failures'' counts records where the model returned non-parseable
 output.}
@@ -505,7 +518,7 @@ output.}
 Method & top-1 & top-3 & top-5 & failures \\
 \midrule
 Random baseline                                 & 0.11           & 0.37           & 0.54           & ---                 \\
-\textbf{Run \#10 (ours, 1.5B)}                  & 0.56           & 0.82           & 0.93           & ---                 \\
+\textbf{Hybrid-Averse (ours, 1.5B)}                  & 0.56           & 0.82           & 0.93           & ---                 \\
 Claude Opus 4.7~\cite{anthropic2026claude47}    & 0.86           & 0.97           & 0.99           & 0 / 220             \\
 GPT-5.5~\cite{openai2026gpt55}                  & 0.85           & 0.92           & 0.93           & 24 / 220            \\
 Gemini 3.5 Flash~\cite{google2026gemini35}      & 0.89           & 0.98           & \textbf{1.00}  & 0 / 220             \\
@@ -529,7 +542,7 @@ with a $\{$pass, fail, $p(\text{fail}) \in [0,1]\}$ prompt on
 $n=250$ records ($200$ FAIL + $50$ PASS, marker-stripped). AUROC is
 computed over $p(\text{fail})$ against the true status; verdict
 accuracy is exact-match against status. \textbf{Bold} = best in
-column. Frontier zero-shot LLMs decisively outperform run \#10 on
+column. Frontier zero-shot LLMs decisively outperform Hybrid-Averse on
 this metric too.}
 \label{tab:llm-discrimination}
 \begin{tabular}{lccc}
@@ -537,7 +550,7 @@ this metric too.}
 Method & AUROC & verdict acc.\ & parse failures \\
 \midrule
 Random baseline                                 & 0.50           & ---            & --- \\
-\textbf{Run \#10 (ours, 1.5B)}                  & 0.78           & ---            & --- \\
+\textbf{Hybrid-Averse (ours, 1.5B)}                  & 0.78           & ---            & --- \\
 Claude Opus 4.7~\cite{anthropic2026claude47}    & 0.977          & 0.968          & 0 / 250 \\
 Qwen 3.7 Max~\cite{qwen2026qwen37}              & 0.946          & 0.920          & 0 / 250 \\
 Gemini 3.5 Flash~\cite{google2026gemini35}      & 0.983          & 0.956          & 0 / 250 \\
@@ -549,8 +562,8 @@ DeepSeek V4 Pro~\cite{deepseek2026v4}           & 0.914          & 0.914        
 
 \paragraph{Reading the result honestly.}
 On \emph{per-line top-$k$}, the gap is large and meaningful: Claude,
-Qwen, and Gemini all reach top-$3 \ge 0.97$ vs.\ run \#10's $0.82$
-on the same $220$ records, and top-$1 \ge 0.86$ vs.\ run \#10's
+Qwen, and Gemini all reach top-$3 \ge 0.97$ vs.\ Hybrid-Averse's $0.82$
+on the same $220$ records, and top-$1 \ge 0.86$ vs.\ Hybrid-Averse's
 $0.56$. This is the load-bearing comparison for the task we trained
 for, and it is not a noise-level difference. The expected
 $100$B+-vs-$1.5$B capability gap on a token-level labelling task is
@@ -610,15 +623,15 @@ the rerunnable scripts are
 A natural follow-up question for the leak we audited in
 \Cref{sec:results:strip-fails-audit}: \emph{is the
 frontier-LLM-as-localizer baseline also vulnerable to it, and
-how does our supposedly-fixed run \#10 behave under the same
+how does our supposedly-fixed Hybrid-Averse behave under the same
 audit?} The strip-FAILS audit is verifier- and
 architecture-agnostic; it asks how a localizer's top-$k$ ranking
 shifts when the \texttt{// FAILS} comment substring is removed at
 evaluation. We ran it on the same $n=220$ subset for the three
 top-performing LLMs from \Cref{tab:llm-zeroshot}, for our
-pre-audit run \#7 (reproduced from \Cref{tab:strip-fails-headline}
+pre-audit Sentinel-Reliant (reproduced from \Cref{tab:strip-fails-headline}
 on the full corpus, where the leak signal is largest), and for our
-post-fix run \#10. The result is more interesting than the simple
+post-fix Hybrid-Averse. The result is more interesting than the simple
 ``LLMs are robust, specialist was leaky'' framing would suggest.
 
 \begin{table}[t]
@@ -629,9 +642,9 @@ the \texttt{// FAILS} comment in the impl shown to the localizer;
 ``stripped'' removes it; $\Delta$ = with-minus-stripped, so
 \emph{positive} $\Delta$ = marker-reliant (signal goes \emph{down}
 when marker is removed), \emph{negative} $\Delta$ = marker-averse
-(signal goes \emph{up} when marker is removed). LLM and run \#10
+(signal goes \emph{up} when marker is removed). LLM and Hybrid-Averse
 numbers on the $n=220$ subset (same as \Cref{tab:llm-zeroshot});
-run \#7 numbers on the full $n=1{,}492$ corpus where the leak
+Sentinel-Reliant numbers on the full $n=1{,}492$ corpus where the leak
 signal is largest (reproduced from \Cref{tab:strip-fails-headline}).}
 \label{tab:llm-marker-audit}
 \begin{tabular}{llccc}
@@ -649,13 +662,13 @@ Gemini 3.5 Flash   & with markers & 0.925    & \textbf{1.000} & \textbf{1.000} \
                    & stripped     & 0.890    & 0.980          & 1.000 \\
                    & $\Delta$     & $+0.035$ & $+0.020$       & $+0.000$ \\
 \midrule
-\multicolumn{5}{l}{\textbf{Run \#7 (specialist, pre-audit --- marker-reliant)}} \\
-Run \#7 (full)     & with markers & 0.73     & 0.93           & 0.96  \\
+\multicolumn{5}{l}{\textbf{Sentinel-Reliant (specialist, pre-audit --- marker-reliant)}} \\
+Sentinel-Reliant (full)     & with markers & 0.73     & 0.93           & 0.96  \\
                    & stripped     & 0.27     & 0.60           & 0.76  \\
                    & $\Delta$     & $+0.46$  & $+0.33$        & $+0.20$ \\
 \midrule
-\multicolumn{5}{l}{\textbf{Run \#10 (specialist, post-fix --- marker-averse)}} \\
-Run \#10           & with markers & 0.055    & 0.265          & 0.535 \\
+\multicolumn{5}{l}{\textbf{Hybrid-Averse (specialist, post-fix --- marker-averse)}} \\
+Hybrid-Averse           & with markers & 0.055    & 0.265          & 0.535 \\
                    & stripped     & 0.560    & 0.815          & 0.930 \\
                    & $\Delta$     & $\mathbf{-0.505}$ & $\mathbf{-0.550}$ & $\mathbf{-0.395}$ \\
 \bottomrule
@@ -671,16 +684,16 @@ The audit reveals a sharper picture than we had before:
 ranking; their predictions are driven by independent
 code-comprehension signal.
 
-\emph{Run \#7} (pre-audit) was marker-\emph{reliant}: stripping the
+\emph{Sentinel-Reliant} (pre-audit) was marker-\emph{reliant}: stripping the
 marker dropped top-1 by 46pp on the full corpus. This is the
 ``Qwen pretraining-prior leak through \texttt{FAILS}/\texttt{FIXME}
 embeddings'' we identified, and motivated the adversarial
-marker-injection fix in run \#9 (carried into run \#10).
+marker-injection fix in Counterfactual-Aug (carried into Hybrid-Averse).
 
-\emph{Run \#10} is marker-\emph{averse}: keeping the marker drops
+\emph{Hybrid-Averse} is marker-\emph{averse}: keeping the marker drops
 top-1 by 50pp \emph{below} its stripped performance, all the way
 to $0.055$ --- below the uniform-random floor of $0.13$. The
-adversarial-marker-injection training that broke run \#7's
+adversarial-marker-injection training that broke Sentinel-Reliant's
 reliance overshot, training the model to actively push the marker
 line \emph{down} the ranking. With markers retained at evaluation
 the model is worse than uniform random; the headline audited number
@@ -700,7 +713,7 @@ $\Delta = 0$ on this table; both of our specialists are far from
 it in opposite directions. A follow-up training recipe that
 explicitly targets marker-invariance --- e.g.\ randomized marker
 insertion on both buggy and non-buggy lines (rather than only on
-non-buggy lines as our run \#9 adversarial scheme did), or
+non-buggy lines as our Counterfactual-Aug adversarial scheme did), or
 training with mixed marker/no-marker batches --- is the clear
 next experiment; we did not run it in this submission.
 
@@ -723,7 +736,7 @@ and adjudicate each with the actual Verus
 toolchain~(\texttt{verus} v0.2026.05.17):
 
 \begin{description}[leftmargin=1.5em,itemsep=0pt]
-\item[Arm A (specialist-guided):] Feed (spec, impl, run \#10's
+\item[Arm A (specialist-guided):] Feed (spec, impl, Hybrid-Averse's
   top-3 lines) to Claude Opus 4.7 with a ``rewrite the flagged
   lines to make Verus accept it'' prompt. Wrap the response,
   invoke Verus.
@@ -857,7 +870,7 @@ argument. The aggregator-invariance observation above is the load-bearing
 empirical evidence; a model-free derivation of $\Delta$ from
 broken/fixed-diff statistics is left for future work.
 
-The eval-time aggregator we report for run \#10 is its trained
+The eval-time aggregator we report for Hybrid-Averse is its trained
 scalar attention-pool head; cherry-picking a different reducer at
 eval would constitute ``assessment drift''~\cite{zhang2025lessonsprm}
 and is not defensible. The aggregator sweep in
@@ -890,7 +903,7 @@ softplus-sum               & 0.475 \\
 \label{sec:results:significance}
 
 \paragraph{Significance vs.\ the length baseline.}
-For the canonical audited comparison, run \#10 (top-3 $= 0.84$)
+For the canonical audited comparison, Hybrid-Averse (top-3 $= 0.84$)
 beats the length baseline (top-3 $= 0.73$) on the marker-stripped
 Verus dev-test corpus; the paired McNemar contingency and exact
 $p$-value are reported in \Cref{tab:significance}. On whole-impl
@@ -899,7 +912,7 @@ $p = 0.006$ (ours $0.778$, marker-keyword $0.673$): significant.
 The honest takeaway is that the model's contribution is concentrated
 in per-line localization; whole-impl AUROC is contextualized by the
 aggregator-invariance argument in \Cref{sec:results:ceiling}. The
-pre-audit run \#7 contingency, included originally for historical
+pre-audit Sentinel-Reliant contingency, included originally for historical
 comparability, is omitted from this version to avoid
 foregrounding numbers we later invalidate.
 
@@ -960,7 +973,7 @@ head that aggregates per-line residuals into a per-impl
 existing sentinel head. The $n=22$ sample is small, but the effect
 size is large and the mechanism is plausible enough that we expect
 the gap to persist at $n=200$. Pre-registering the prediction:
-\emph{a global-attention head added to run \#10 should close
+\emph{a global-attention head added to Hybrid-Averse should close
 $\ge 15$pp of the \texttt{ensures}-subgroup top-3 gap with no
 regression on the \texttt{assert} subgroup}. We treat this as the
 single most informative architectural follow-up.
@@ -996,7 +1009,7 @@ $0.897 - 0.40 = +50$pp long, so absolute lift remains strong).
 \label{sec:results:strip-fails-audit}
 \label{sec:results:robustness}
 
-The pre-audit run \#7 top-3 of $0.93$ on the Verus dev-test corpus
+The pre-audit Sentinel-Reliant top-3 of $0.93$ on the Verus dev-test corpus
 \emph{looks} like clean transfer from mutator-trained data to
 hand-authored failures. Literature predicts $20$--$40$pp
 drops~\cite{just2014mutants, pradel2018deepbugs,allamanis2021ssbd}, so
@@ -1015,7 +1028,7 @@ transfer.
 \begin{table}[htbp]
 \centering
 \caption{Strip-FAILS audit on the Verus dev-test corpus
-($n{=}1{,}492$, run \#7 step-500 checkpoint). The marker provides
+($n{=}1{,}492$, Sentinel-Reliant step-500 checkpoint). The marker provides
 substantial discriminative signal: top-3 falls $33$pp when markers are
 stripped, dropping below the length baseline. We confirm the audit
 generalizes by also stripping markers from baselines (which mostly do
@@ -1028,7 +1041,7 @@ construction --- bold row).}
                                 & With \texttt{// FAILS}  & Stripped                \\
 \midrule
 top-1                           & 0.73                    & 0.27 ($-46$pp)          \\
-\textbf{top-3 (ours, run \#7)}  & \textbf{0.93}           & \textbf{0.60} ($-33$pp) \\
+\textbf{top-3 (ours, Sentinel-Reliant)}  & \textbf{0.93}           & \textbf{0.60} ($-33$pp) \\
 top-5                           & 0.96                    & 0.76 ($-20$pp)          \\
 AUROC (LSE)                     & 0.49                    & 0.44                    \\
 \midrule
@@ -1049,7 +1062,7 @@ pretraining and used it as the single most informative feature at
 evaluation time. Embedding-surgery (zeroing the marker embeddings
 before evaluation) confirms this: it recovers most of the lost
 performance (see \Cref{app:marker-aug}), but is a fragile post-hoc patch. The mitigation we ship is adversarial
-marker injection during training (run \#9; \Cref{app:marker-aug}),
+marker injection during training (Counterfactual-Aug; \Cref{app:marker-aug}),
 which shrinks the with-marker--vs--stripped gap from $33$pp to $4$pp
 on top-3.
 
@@ -1105,10 +1118,10 @@ Verus-keyword classifier'':
 \begin{table}[htbp]
 \centering
 \caption{Verus-keyword baseline on both corpora, vs.\ length
-baseline and pre-audit run \#7 (shown only for leak-analysis
+baseline and pre-audit Sentinel-Reliant (shown only for leak-analysis
 context). Keyword baseline beats length top-3 on both corpora;
 the model retains a $+17$pp (held) / $+13$pp (dev-test) gap
-\emph{before} the marker-stripping audit. The audited run \#10
+\emph{before} the marker-stripping audit. The audited Hybrid-Averse
 top-3 on the marker-stripped dev-test corpus is $0.84$
 (\Cref{tab:run10-real-bug}).}
 \label{tab:keyword}
@@ -1120,7 +1133,7 @@ top-3 on the marker-stripped dev-test corpus is $0.84$
 Uniform random                      & 0.40              & 0.38              \\
 Length                              & 0.74              & 0.73              \\
 Verus-keyword (this section)        & 0.73              & 0.80              \\
-\textbf{Run \#7 (LSE, pre-audit)}   & \textbf{0.90}     & \textbf{0.93}     \\
+\textbf{Sentinel-Reliant (LSE, pre-audit)}   & \textbf{0.90}     & \textbf{0.93}     \\
 gap vs.\ keyword                    & $+17$pp           & $+13$pp           \\
 \bottomrule
 \end{tabular}
@@ -1170,7 +1183,7 @@ records use the same schema can be re-audited mechanically.
 \label{sec:discussion}
 
 \paragraph{What this paper claims.} The headline is
-\emph{calibration}, not specialist superiority. Run \#10 is a
+\emph{calibration}, not specialist superiority. Hybrid-Averse is a
 working per-line Verus fault localizer (top-3 $= 0.84$,
 AUROC $= 0.78$, \Cref{tab:run10-real-bug}), and the strip-FAILS
 audit pipeline that produced this audited number --- after
@@ -1209,15 +1222,15 @@ modeling.
   but not significant at $\alpha=0.05$. A larger evaluation
   ($n \ge 500$) would either confirm the directional pattern as a
   real specialist-vs-LLM-self-judged gap or refine the estimate.
-\item LSE-$T$ annealing during run \#7 training caused
+\item LSE-$T$ annealing during Sentinel-Reliant training caused
   observed whole-impl AUROC oscillations as the effective aggregator
   changed mid-training --- the ``assessment drift'' pathology of
-  Zhang et al.~\cite{zhang2025lessonsprm}. Run \#10's scalar-head
+  Zhang et al.~\cite{zhang2025lessonsprm}. Hybrid-Averse's scalar-head
   architecture sidesteps this by eliminating the LSE aggregator.
 \item We evaluate on Verus only. Transfer to Dafny~\cite{dafny} or
   F\textsuperscript{*} requires re-tokenization and is left
   unaddressed. A small out-of-Verus probe on HumanEvalPack-Rust
-  \cite{muennighoff2024octopack} (n=328, run \#10 zero-shot) shows
+  \cite{muennighoff2024octopack} (n=328, Hybrid-Averse zero-shot) shows
   the per-line head retains $1.2$--$1.7\times$ lift over uniform but
   the scalar head is at chance --- out-of-Verus deployment would
   need either retraining or a verifier-agnostic per-line head.
@@ -1260,7 +1273,7 @@ variance estimation.
 \section{Conclusion}
 \label{sec:conclusion}
 We built a 1.5B-parameter discriminative energy-based per-line
-scorer for Verus (run \#10, AUROC $= 0.78$, top-1 $= 0.56$,
+scorer for Verus (Hybrid-Averse, AUROC $= 0.78$, top-1 $= 0.56$,
 top-3 $= 0.84$ on the marker-stripped Verus dev-test corpus) and
 ran three measurements against zero-shot frontier LLMs on the same
 corpus: per-line top-$k$, whole-implementation discrimination
@@ -1275,8 +1288,8 @@ but underpowered).
 
 We also built and released a strip-FAILS audit pipeline that
 surfaced and quantified a Qwen pretraining-prior leak in our own
-earlier checkpoint (run \#7, $+46$pp top-1 marker-reliance) and
-that re-applied to run \#10 reveals the opposite pathology
+earlier checkpoint (Sentinel-Reliant, $+46$pp top-1 marker-reliance) and
+that re-applied to Hybrid-Averse reveals the opposite pathology
 ($-50$pp top-1 marker-aversion: the adversarial-marker-injection
 fix overshot). Frontier LLMs are essentially marker-invariant
 ($|\Delta| \le 3.5$pp); neither of our trained specialists is.
@@ -1286,7 +1299,7 @@ CEGIS use case. The contributions of the paper that survive the
 three-way calibration are: (i) the audit pipeline, which catches
 both marker-reliance and marker-aversion in trained specialists
 and is verifier- and architecture-agnostic; (ii) the architectural
-ablation attributing the run \#9 $\to$ \#10 gain to the scalar
+ablation attributing the Counterfactual-Aug $\to$ \#10 gain to the scalar
 attention-pool head; (iii) the calibration result itself --- to
 our knowledge the first end-to-end specialist-vs-LLM measurement
 for Verus per-line fault localization --- which closes the
@@ -1316,7 +1329,7 @@ fellowship-scale follow-up should investigate.
 \item Strip-FAILS audit pipeline: \texttt{scripts/strip\_fails\_reeval.py}
   (regenerates the audited corpus from the raw \texttt{// FAILS}-marked
   source for any model whose records use the same schema).
-\item Headline checkpoint (run \#10, hybrid scalar-head):
+\item Headline checkpoint (Hybrid-Averse, hybrid scalar-head):
   \texttt{checkpoints/run10/}. Intermediate checkpoints
   (\texttt{run7\_step500}, \texttt{run9}) are released alongside for
   reproduction of the audit narrative.
@@ -1609,10 +1622,10 @@ within-impl z-score normalize per-line energies, then mean of top-$k$.
 On Verus dev-test records: $k{=}1$: $0.504$; $k{=}2$: $0.451$; $k{=}3$: $0.424$;
 $k{=}5$: $0.420$. No reducer escapes the chance band; the ceiling holds.
 
-\section{Significance tests: run \#10 vs.\ baselines}
+\section{Significance tests: Hybrid-Averse vs.\ baselines}
 \label{app:significance}
 
-\Cref{tab:significance} gives paired significance tests for run \#10
+\Cref{tab:significance} gives paired significance tests for Hybrid-Averse
 (stripped) against the six static baselines on the Verus dev-test corpus. Top-$k$
 tests are paired McNemar (exact binomial when $b_{01}+b_{10}<25$, $\chi^2$
 with continuity correction otherwise). AUROC tests are paired DeLong
@@ -1625,7 +1638,7 @@ joined by \texttt{impl\_id}; no records are excluded.
 
 The marker-keyword baseline ($p=0.006$ on AUROC) shows the smallest gap
 because by design it is a near-oracle for line-level localization on the
-unstripped corpus---but even there, run \#10's impl-level discrimination
+unstripped corpus---but even there, Hybrid-Averse's impl-level discrimination
 is statistically meaningfully better, and on the stripped corpus
 (\Cref{sec:results:run10-baselines}) the gap widens further.
 
@@ -1681,11 +1694,12 @@ gradient checkpointing on. Max sequence length 4096. Sentinel token:
 
 \paragraph{Hardware.}
 Single A100 SXM 80GB (RunPod community cloud, USD~\$1.39--1.49/hr).
-Run~\#7 total wallclock: $\sim$3h to reach step 1845 before
+Sentinel-Reliant total wallclock: $\sim$3h to reach step 1845 before
 stop-point. The step-500 checkpoint we report from required
 $\sim$30 minutes of training.
 
-\section{Marker-leak fix: runs \#8, \#9, \#10 in brief}
+\section{Training-run brief: Counterfactual-Mixed, Counterfactual-Aug, Hybrid-Averse}
+\label{app:runs-brief}
 \label{app:marker-aug}
 
 The strip-FAILS audit (\Cref{sec:results:strip-fails-audit})
@@ -1696,7 +1710,7 @@ the marker$\to$buggy association from pretraining via the
 LoRA-passthrough of Qwen's prior. We attempted three fixes across
 runs \#8--\#10.
 
-\paragraph{Run \#8 (failed).} Mixed-marker counterfactual
+\paragraph{Counterfactual-Mixed (failed).} Mixed-marker counterfactual
 augmentation following Kaushik et al.~\cite{kaushik2020counterfactual}
 and Veitch et al.~\cite{veitch2021counterfactual}: $K{=}4$
 perturbed copies per training example, marker injection at $p=0.5$
@@ -1707,12 +1721,12 @@ positive distractors on buggy lines created within-class label
 noise, collapsing the within-spec InfoNCE loss in the manner
 documented by Wang \& Isola~\cite{wang2020alignment}.
 
-\paragraph{Run \#9 (partial fix).} Adversarial-only marker injection:
+\paragraph{Counterfactual-Aug (partial fix).} Adversarial-only marker injection:
 place \texttt{// FAILS}-family markers (no positive distractors) on
 a uniformly random \emph{non}-buggy line with $p=0.6$, $K{=}2$ copies.
 This installs a clean marker$\to$non-bug anti-correlation with no
 within-class label noise, and shrinks the marker-leak gap from
-$33$pp to $4$pp on top-3. But run \#9's held-set whole-impl AUROC
+$33$pp to $4$pp on top-3. But Counterfactual-Aug's held-set whole-impl AUROC
 inverted to $0.40$ while top-3 climbed to $0.87$ --- an
 alignment-without-uniformity failure: per-line ranking is correct
 but the LSE aggregator inherits a per-impl additive bias
@@ -1722,7 +1736,7 @@ aggregators (mean-subtracted max/top-3/top1-minus-min) recover only
 partially ($\le 0.57$ AUROC); the bias drift is deeper than
 mean-subtraction can fix.
 
-\paragraph{Run \#10 (architectural fix).} The post-hoc result
+\paragraph{Hybrid-Averse (architectural fix).} The post-hoc result
 establishes that the LSE aggregator itself is the problem, not its
 temperature. We add a directly-trained scalar attention-pool head on
 top of $[$spec; impl$]$ hidden states (no LSE aggregation), with
@@ -1737,13 +1751,13 @@ mining~\cite{schroff2015facenet,wu2017samplingmatters}. The
 impl-pair contrastive loss is implemented as logistic pairwise
 $\text{softplus}(E^+ - E^-)$ (\cite{lecun2006tutorial}~§2.3) which
 asymptotes but never saturates, avoiding the zero-gradient hinge
-saturation that reproduced run \#9's InfoNCE collapse.
+saturation that reproduced Counterfactual-Aug's InfoNCE collapse.
 
-\paragraph{Run \#10 three-way evaluation.}
+\paragraph{Hybrid-Averse three-way evaluation.}
 
 \begin{table}[htbp]
 \centering
-\caption{Run \#10 vs.\ baselines on the Verus dev-test corpus
+\caption{Hybrid-Averse vs.\ baselines on the Verus dev-test corpus
 ($n{=}1{,}492$, $609$ FAIL with labels). Bootstrap $95\%$ CIs from
 $500$ resamples. \textbf{Stripped is the canonical eval} (marker-free).}
 \label{tab:run10-real-bug}
@@ -1752,36 +1766,36 @@ $500$ resamples. \textbf{Stripped is the canonical eval} (marker-free).}
 \toprule
                                   & top-1            & top-3            & AUROC          \\
 \midrule
-Run \#7 with-marker (reference)   & 0.73             & 0.93             & 0.49           \\
-Run \#7 stripped (reference)      & 0.44             & 0.60             & 0.44           \\
-Run \#9 token-masked              & 0.45             & 0.80             & 0.51           \\
-Run \#9 stripped                  & 0.45             & 0.76             & 0.49           \\
+Sentinel-Reliant with-marker (reference)   & 0.73             & 0.93             & 0.49           \\
+Sentinel-Reliant stripped (reference)      & 0.44             & 0.60             & 0.44           \\
+Counterfactual-Aug token-masked              & 0.45             & 0.80             & 0.51           \\
+Counterfactual-Aug stripped                  & 0.45             & 0.76             & 0.49           \\
 \midrule
-Run \#10 token-masked             & 0.064            & 0.388            & \textbf{0.782} \\
-\textbf{Run \#10 stripped}        & \textbf{0.560}   & \textbf{0.839}   & \textbf{0.778} \\
-Run \#10 no-surgery               & 0.038            & 0.238            & \textbf{0.842} \\
+Hybrid-Averse token-masked             & 0.064            & 0.388            & \textbf{0.782} \\
+\textbf{Hybrid-Averse stripped}        & \textbf{0.560}   & \textbf{0.839}   & \textbf{0.778} \\
+Hybrid-Averse no-surgery               & 0.038            & 0.238            & \textbf{0.842} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \textbf{Three findings:}
 
-\emph{(1) AUROC fix succeeded decisively.} Run \#10 AUROC on dev-test failures
-is $0.78$--$0.84$ across all three arms ($+30$pp vs.\ run \#9 stripped
-$0.49$, $+35$pp vs.\ run \#7 stripped $0.44$). The scalar attention-pool
+\emph{(1) AUROC fix succeeded decisively.} Hybrid-Averse AUROC on dev-test failures
+is $0.78$--$0.84$ across all three arms ($+30$pp vs.\ Counterfactual-Aug stripped
+$0.49$, $+35$pp vs.\ Sentinel-Reliant stripped $0.44$). The scalar attention-pool
 head trained directly on logistic impl-pair loss produces honest cross-impl
 ranking. This is the first run where AUROC and top-3 are both above
 chance on the same checkpoint.
 
 \emph{(2) Strongest per-line localization on a leak-free metric.} Run
-\#10 stripped delivers top-1 $= 0.56$ ($+12$pp vs.\ run \#9, $+12$pp vs.\
-run \#7 stripped) and top-3 $= 0.84$ ($+8$pp vs.\ run \#9, $+24$pp vs.\
-run \#7 stripped). This is the cleanest Verus dev-test result we have:
+\#10 stripped delivers top-1 $= 0.56$ ($+12$pp vs.\ Counterfactual-Aug, $+12$pp vs.\
+Sentinel-Reliant stripped) and top-3 $= 0.84$ ($+8$pp vs.\ Counterfactual-Aug, $+24$pp vs.\
+Sentinel-Reliant stripped). This is the cleanest Verus dev-test result we have:
 no marker leak (\texttt{// FAILS} stripped from input), no aggregator
 artifact (scalar head not LSE), no within-class label noise.
 
 \emph{(3) Adversarial marker training over-corrects on marker-bearing inputs.}
-Run \#10's top-1 falls to $0.064$ when the corpus still contains
+Hybrid-Averse's top-1 falls to $0.064$ when the corpus still contains
 \texttt{// FAILS} markers. The model has learned a strong
 \texttt{// FAILS}$\to$non-buggy prior from training; at eval on dev-test failures
 where $42.9\%$ of records have markers placed near actual bug lines (by
@@ -1794,10 +1808,10 @@ re-introduces the spurious feature with its original sign
 subset of records with markers. \textbf{Mitigation:} report stripped
 eval as canonical; the with-marker arm is reported for transparency.
 
-\paragraph{Ablation: which run \#10 change actually fixed AUROC.}
-We trained four single-component ablations of run \#10 to attribute the
-$+30$pp AUROC gain over run \#9. \emph{A1: no scalar head} reverts to
-run \#9's LSE aggregator over per-line energies. \emph{A2: no listwise}
+\paragraph{Ablation: which Hybrid-Averse change actually fixed AUROC.}
+We trained four single-component ablations of Hybrid-Averse to attribute the
+$+30$pp AUROC gain over Counterfactual-Aug. \emph{A1: no scalar head} reverts to
+Counterfactual-Aug's LSE aggregator over per-line energies. \emph{A2: no listwise}
 disables the ListNet within-impl softmax term. \emph{A3: no semi-hard
 mining} replaces the FaceNet-style top-$k$ negative selection
 \cite{schroff2015facenet} with uniform random negatives. \emph{A4:
@@ -1810,7 +1824,7 @@ are scored on the same Verus dev-test corpus.
 \begin{table}[htbp]
 \centering
 \small
-\caption{Single-knob ablations of run \#10 on the marker-stripped Verus dev-test
+\caption{Single-knob ablations of Hybrid-Averse on the marker-stripped Verus dev-test
 corpus ($n{=}1{,}492$). Attribution order:
 \textbf{scalar head $\gg$ listwise $>$ semi-hard mining $\gg$ logistic loss}.
 The scalar attention-pool head is the load-bearing architectural change;
@@ -1822,7 +1836,7 @@ choice is within-noise.}
 \toprule
                                      & AUROC          & top-1           & top-3           \\
 \midrule
-Run \#10 (3 epochs, reference)        & \textbf{0.778} & \textbf{0.560}  & \textbf{0.839}  \\
+Hybrid-Averse (3 epochs, reference)        & \textbf{0.778} & \textbf{0.560}  & \textbf{0.839}  \\
 \textbf{A1: no scalar head} (LSE)     & 0.455          & 0.516           & 0.819           \\
 \textbf{A2: no listwise}              & 0.592          & 0.598           & 0.836           \\
 \textbf{A3: no semi-hard mining}      & 0.663          & 0.547           & 0.790           \\
@@ -1832,9 +1846,9 @@ Run \#10 (3 epochs, reference)        & \textbf{0.778} & \textbf{0.560}  & \text
 \end{table}
 
 \textbf{Reading.} Removing the scalar head (A1) collapses AUROC from
-$0.78$ to $0.46$ --- back to run \#9 chance levels, confirming that
+$0.78$ to $0.46$ --- back to Counterfactual-Aug chance levels, confirming that
 without an end-to-end-trained impl-level head, the LSE aggregator
-inherits the bias drift that the run \#9 post-mortem diagnosed (Wang \&
+inherits the bias drift that the Counterfactual-Aug post-mortem diagnosed (Wang \&
 Isola 2020 alignment-without-uniformity~\cite{wang2020alignment}).
 Per-line localisation (top-1, top-3) is barely affected because the
 per-line head is independent.
@@ -1843,16 +1857,17 @@ Removing the listwise term (A2) drops AUROC to $0.59$ and removing
 semi-hard mining (A3) drops it to $0.66$. Both are large compared to
 the logistic-vs-hinge swap and small compared to removing the scalar
 head, placing them in a clear middle tier. Curiously, A2 \emph{improves}
-top-1 ($0.60$ vs run \#10's $0.56$): without the listwise smoothing
+top-1 ($0.60$ vs Hybrid-Averse's $0.56$): without the listwise smoothing
 pressure, the per-line head over-commits to its top guess. This is the
 classic ranking-quality vs single-point-accuracy trade-off motivating
-ListNet \cite{cao2007listnet} in the first place --- our run \#11 stack
-re-targets it with ListMLE \cite{xia2008listmle} and focal weighting
-\cite{lin2017focal}.\footnote{Run \#11b (post-deadline, listed for
-completeness) replicates the run \#10 marker-aversion pattern even more
+ListNet \cite{cao2007listnet} in the first place --- the EPA-Stack
+post-deadline retry re-targets it with ListMLE
+\cite{xia2008listmle} and focal weighting
+\cite{lin2017focal}.\footnote{EPA-Stack (post-deadline, listed for
+completeness) replicates the Hybrid-Averse marker-aversion pattern even more
 strongly: top-1 on the stripped corpus is $0.516$ vs.\ $0.046$ with
-markers intact, a $-47$pp delta vs.\ run \#10's $-52$pp. The headline
-results in this paper are taken from run \#10.}
+markers intact, a $-47$pp delta vs.\ Hybrid-Averse's $-52$pp. The headline
+results in this paper are taken from Hybrid-Averse.}
 
 By contrast, reverting the impl-pair loss from logistic back to hinge
 (A4) leaves AUROC essentially unchanged ($0.778 \to 0.784$). The
@@ -1860,7 +1875,7 @@ By contrast, reverting the impl-pair loss from logistic back to hinge
 an \emph{aesthetic improvement} during training (the loss never reaches
 exact zero, so the loss curve looks healthier) rather than a substantive
 contributor to held-out performance. \textbf{The single load-bearing
-architectural change between run \#9 and run \#10 is the scalar
+architectural change between Counterfactual-Aug and Hybrid-Averse is the scalar
 attention-pool head}; the listwise + semi-hard contributions are
 non-trivial but secondary; the logistic loss change is a defensive
 implementation detail.

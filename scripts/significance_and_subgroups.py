@@ -10,7 +10,7 @@ Computes:
 
 Usage:
     uv run python scripts/significance_and_subgroups.py \
-        --records artifacts/real_bugs/run7_step500/eval_records.jsonl
+        --records artifacts/sentinel_reliant/eval_records.jsonl
 """
 from __future__ import annotations
 import argparse, json, math, re, sys

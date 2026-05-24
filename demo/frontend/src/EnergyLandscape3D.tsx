@@ -5,6 +5,15 @@ import * as THREE from 'three'
 import { interpolateRdBu } from 'd3-scale-chromatic'
 import type { EnergyField } from './api'
 
+export type Landscape3DExample = {
+  x: number
+  y: number
+  whole_impl_energy: number
+  category: 'model_win' | 'model_miss' | 'pass_low_energy'
+  label: string
+  impl_id: string
+}
+
 type Props = {
   field: EnergyField
   userBall?: { x: number; y: number; energy: number } | null
@@ -14,6 +23,9 @@ type Props = {
   showWireframe?: boolean
   heightScale?: number
   showStats?: boolean
+  examples?: Landscape3DExample[]
+  highlightedImplId?: string | null
+  onExampleClick?: (ex: Landscape3DExample) => void
 }
 
 function hex2rgb(s: string): [number, number, number] {
@@ -199,6 +211,57 @@ function Trajectory({ field, trajectory, step, heightScale }: {
   )
 }
 
+/** Curated-example markers as colored spheres pinned to the terrain surface.
+ *  - model_win  → soft green
+ *  - model_miss → coral red
+ *  - pass_low_energy → light blue
+ *  Highlighted example gets a slightly larger sphere with emissive glow. */
+function ExampleMarkers({ field, examples, heightScale, highlightedImplId, onExampleClick }: {
+  field: EnergyField
+  examples: Landscape3DExample[]
+  heightScale: number
+  highlightedImplId?: string | null
+  onExampleClick?: (ex: Landscape3DExample) => void
+}) {
+  const { x_min, x_max, y_min, y_max, energy_min } = field
+  const xMid = (x_min + x_max) / 2
+  const yMid = (y_min + y_max) / 2
+  const colorOf = (c: Landscape3DExample['category']) => {
+    if (c === 'model_win') return '#5fd99a'
+    if (c === 'model_miss') return '#f06674'
+    return '#7bb8f0'
+  }
+  return (
+    <>
+      {examples.map(ex => {
+        const surfaceE = sampleField(field, ex.x, ex.y)
+        const pos: [number, number, number] = [
+          ex.x - xMid,
+          (surfaceE - energy_min) * heightScale + 0.08,
+          -(ex.y - yMid),
+        ]
+        const isHi = highlightedImplId === ex.impl_id
+        return (
+          <mesh
+            key={ex.impl_id}
+            position={pos}
+            onClick={(e) => { e.stopPropagation(); if (onExampleClick) onExampleClick(ex) }}
+            onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer' }}
+            onPointerOut={() => { document.body.style.cursor = 'auto' }}
+          >
+            <sphereGeometry args={[isHi ? 0.22 : 0.14, 24, 24]} />
+            <meshStandardMaterial
+              color={colorOf(ex.category)}
+              emissive={colorOf(ex.category)}
+              emissiveIntensity={isHi ? 0.75 : 0.25}
+            />
+          </mesh>
+        )
+      })}
+    </>
+  )
+}
+
 function UserBall({ field, ball, heightScale }: {
   field: EnergyField
   ball: { x: number; y: number; energy: number }
@@ -223,6 +286,7 @@ export default function EnergyLandscape3D(props: Props) {
     showWireframe = false,
     heightScale = 0.5,
     showStats = false,
+    examples, highlightedImplId, onExampleClick,
   } = props
 
   const { x_min, x_max, y_min, y_max } = field
@@ -244,6 +308,10 @@ export default function EnergyLandscape3D(props: Props) {
 
       <Terrain field={field} heightScale={heightScale} wireframe={showWireframe} />
       {showPoints && <DataPoints field={field} heightScale={heightScale} />}
+      {examples && examples.length > 0 && (
+        <ExampleMarkers field={field} examples={examples} heightScale={heightScale}
+                        highlightedImplId={highlightedImplId} onExampleClick={onExampleClick} />
+      )}
       {trajectory && trajectoryStep != null && trajectoryStep > 0 && (
         <Trajectory field={field} trajectory={trajectory} step={trajectoryStep} heightScale={heightScale} />
       )}

@@ -15,14 +15,19 @@ Submitted to the Apart × Atlas Computing **Secure Program Synthesis Hackathon, 
 
 ## Headline results
 
-| Measurement | Specialist (run #10, 1.5B) | Best frontier LLM | Verdict |
+We refer to checkpoints by descriptive name throughout:
+- **Hybrid-Averse** — final, hybrid scalar-head model (canonical paper headline).
+- **Sentinel-Reliant** — pre-audit LSE-aggregator that leaks via the `// FAILS` marker.
+- **EPA-Stack** — post-deadline retry, mentioned only in the footnote.
+
+| Measurement | Hybrid-Averse (1.5B) | Best frontier LLM | Verdict |
 |---|---|---|---|
-| Per-line top-3 recall on Verus dev-test (n=609 FAILs) | **0.84** | 0.74 (Claude Opus 4.7) | specialist wins |
+| Per-line top-3 recall on Verus dev-test (n=609 FAILs) | **0.84** | 0.74 (Claude Opus 4.7) | Hybrid-Averse wins |
 | Whole-impl discrimination AUROC | **0.87** | 0.91 (GPT-5.5) | LLM wins |
 | Closed-loop CEGIS repair@1 (n=100) | 25% (specialist-guided) | 30% (LLM self-judged) | LLM wins |
 | Marker-leak audit (top-1 delta when `// FAILS` markers stripped) | **−52pp** (averse) | **±5pp** (invariant) | both honest, opposite direction |
 
-The specialist beats every static baseline by a wide margin and matches a $200/run frontier LLM on per-line top-3; LLMs match or beat it on the two other measurements. The marker-leak audit reveals three regimes of `// FAILS` dependency in the wild. Full numbers and statistical tests in the paper.
+Hybrid-Averse beats every static baseline by a wide margin and matches a $200/run frontier LLM on per-line top-3; LLMs match or beat it on the two other measurements. The marker-leak audit reveals three regimes of `// FAILS` dependency in the wild. Full numbers and statistical tests in the paper.
 
 ---
 
@@ -35,10 +40,10 @@ The strip-FAILS audit is the paper's reproducibility centerpiece. It runs on a l
 git clone git@github.com:ozlabsai/VericodingEBM.git
 cd VericodingEBM
 
-# 2. Run the audit on the canonical paper run (#10, marker-averse)
+# 2. Audit the canonical Hybrid-Averse checkpoint (marker-averse, post-fix)
 python scripts/audit_demo.py \
-  --no-surgery artifacts/real_bugs/run10_no_surgery/eval_records.jsonl \
-  --stripped   artifacts/real_bugs/run10_stripped/eval_records.jsonl
+  --no-surgery artifacts/real_bugs/hybrid_averse_no_surgery/eval_records.jsonl \
+  --stripped   artifacts/real_bugs/hybrid_averse_stripped/eval_records.jsonl
 ```
 
 Expected output (matches paper Table 7):
@@ -54,12 +59,12 @@ Expected output (matches paper Table 7):
   Verdict: marker-AVERSE (signal IMPROVES when marker removed)
 ```
 
-The same demo against the **run #7** checkpoint (which leaked via markers) shows the opposite regime:
+The same demo against the **Sentinel-Reliant** checkpoint (pre-audit, leaks via markers) shows the opposite regime:
 
 ```bash
 python scripts/audit_demo.py \
-  --no-surgery artifacts/run7_step500/no_surgery.jsonl \
-  --stripped   artifacts/run7_step500/stripped.jsonl
+  --no-surgery artifacts/real_bugs/sentinel_reliant_no_surgery/eval_records.jsonl \
+  --stripped   artifacts/real_bugs/sentinel_reliant_stripped/eval_records.jsonl
 # → Verdict: marker-RELIANT
 ```
 
@@ -106,7 +111,7 @@ scripts/
   figure_position_shift.py
   analyze_records.py
 
-configs/                 — run configs (run10_hybrid.yaml is canonical)
+configs/                 — training configs (run10_hybrid.yaml produces Hybrid-Averse)
 artifacts/               — released eval records (see Reproducing section)
 demo/                    — interactive manifold viewer (static site in dist/)
 ```
@@ -124,10 +129,10 @@ All analyses run from released JSONLs in `artifacts/` — no GPU, no API key.
 | Table 2 (static baselines) | `artifacts/baselines/*.jsonl` | `scripts/analyze_records.py` |
 | Table 3 (LLM disc baselines) | `artifacts/baselines/llm_disc/*.jsonl` | `scripts/analyze_records.py` |
 | Table 6 (3-arm CEGIS) | `artifacts/cegis/3arm_results_v2.jsonl`, `summary_3arm.json` | precomputed |
-| Table 7 (strip-FAILS audit) | `artifacts/real_bugs/run10_*` | `scripts/audit_demo.py` |
+| Table 7 (strip-FAILS audit, Hybrid-Averse) | `artifacts/real_bugs/hybrid_averse_*` | `scripts/audit_demo.py` |
 | Table 8 (ablations A1–A4) | `artifacts/ablations/*/` | `scripts/audit_demo.py` per ablation |
-| Table 10 (run #7 pre-audit) | `artifacts/run7_step500/*` | `scripts/audit_demo.py` |
-| Figure 1 (position shift) | `artifacts/ochiai_baseline/records.jsonl`, `artifacts/real_bugs/run7_step500/eval_records.jsonl` | `scripts/figure_position_shift.py` |
+| Table 10 (Sentinel-Reliant pre-audit) | `artifacts/real_bugs/sentinel_reliant_*` | `scripts/audit_demo.py` |
+| Figure 1 (position shift) | `artifacts/ochiai_baseline/records.jsonl`, `artifacts/real_bugs/sentinel_reliant_no_surgery/eval_records.jsonl` | `scripts/figure_position_shift.py` |
 | Figures 2–3 | `artifacts/baselines/`, summary jsons | `scripts/make_paper_figures.py` |
 
 ---

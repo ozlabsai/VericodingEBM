@@ -1,7 +1,7 @@
 """Figure: buggy-line position shift across corpora + model predictions.
 
 Reads:
-  artifacts/real_bugs/run7_step500/eval_records.jsonl  (model on real bugs)
+  artifacts/sentinel_reliant/eval_records.jsonl  (model on real bugs)
   artifacts/ochiai_baseline/records.jsonl              (sft_safe held set, has labels)
 
 Produces:
@@ -50,7 +50,7 @@ def pred_top1_positions(recs: list[dict]) -> list[float]:
     return out
 
 held_recs = load_records(REPO / "artifacts/ochiai_baseline/records.jsonl")
-real_recs = load_records(REPO / "artifacts/real_bugs/run7_step500/eval_records.jsonl")
+real_recs = load_records(REPO / "artifacts/sentinel_reliant/eval_records.jsonl")
 
 # Gold buggy positions (from labels in both corpora)
 held_gold = gold_buggy_positions(held_recs)

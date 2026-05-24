@@ -11,14 +11,15 @@ This is the 5-minute reproducibility demo for the paper's strip-FAILS audit
 section. It needs only Python + numpy + (optional) scipy/sklearn.
 
 Usage:
+    # Sentinel-Reliant checkpoint (pre-audit, leaks via markers):
     python scripts/audit_demo.py \\
-        --no-surgery artifacts/real_bugs/run7_step500/no_surgery.jsonl \\
-        --stripped   artifacts/real_bugs/run7_step500/stripped.jsonl
+        --no-surgery artifacts/real_bugs/sentinel_reliant_no_surgery/eval_records.jsonl \\
+        --stripped   artifacts/real_bugs/sentinel_reliant_stripped/eval_records.jsonl
 
-    # Or for the post-fix run #10 (shows marker-aversion):
+    # Hybrid-Averse checkpoint (post-fix, canonical paper headline):
     python scripts/audit_demo.py \\
-        --no-surgery artifacts/real_bugs/run10_no_surgery/eval_records.jsonl \\
-        --stripped   artifacts/real_bugs/run10_stripped/eval_records.jsonl
+        --no-surgery artifacts/real_bugs/hybrid_averse_no_surgery/eval_records.jsonl \\
+        --stripped   artifacts/real_bugs/hybrid_averse_stripped/eval_records.jsonl
 """
 from __future__ import annotations
 import argparse, json, sys

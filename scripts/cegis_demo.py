@@ -11,7 +11,7 @@ Report repair-rate-at-1 for both, paired McNemar test.
 
 Usage:
     OPENROUTER_API_KEY=... uv run python scripts/cegis_demo.py \\
-        --records artifacts/real_bugs/run10_stripped/eval_records.jsonl \\
+        --records artifacts/real_bugs/hybrid_averse_stripped/eval_records.jsonl \\
         --n 50 --verus /tmp/verus/verus-arm64-macos/verus \\
         --out artifacts/cegis/results.jsonl
 """

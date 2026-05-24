@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import EnergyLandscape from './EnergyLandscape'
+import EnergyLandscape, { type LandscapeExample } from './EnergyLandscape'
 import LineEditor from './LineEditor'
 import { fetchEnergyField, descend, type EnergyField, type ScoreLineResponse, type Trajectory } from './api'
 
@@ -27,6 +27,8 @@ export default function LandscapePage() {
   const [showPoints, setShowPoints] = useState(true)
   const [panelSize, setPanelSize] = useState({ w: 900, h: 720 })
   const [loading, setLoading] = useState(false)
+  const [examples, setExamples] = useState<LandscapeExample[]>([])
+  const [highlightedImplId, setHighlightedImplId] = useState<string | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Fetch field whenever scope/grid changes.
@@ -36,6 +38,16 @@ export default function LandscapePage() {
       .then(f => { setField(f); setLoading(false) })
       .catch(e => { setLoading(false); console.error(e) })
   }, [scope, grid])
+
+  // Curated examples are scope-independent (they're impl-level), so load once.
+  // Only show them in impl scope (line scope has its own per-line coordinates).
+  useEffect(() => {
+    const base = `${(import.meta as any).env?.BASE_URL ?? '/'}data`.replace(/\/+$/, '')
+    fetch(`${base}/examples.json`)
+      .then(r => r.ok ? r.json() : Promise.reject(`${r.status}`))
+      .then((es: LandscapeExample[]) => setExamples(es))
+      .catch(e => console.warn('examples load failed:', e))
+  }, [])
 
   // Track panel size.
   useEffect(() => {
@@ -152,6 +164,9 @@ export default function LandscapePage() {
                 showArrows={showArrows}
                 showPoints={showPoints}
                 onClick={handleLandscapeClick}
+                examples={scope === 'impl' ? examples : undefined}
+                highlightedImplId={highlightedImplId}
+                onExampleClick={(ex) => setHighlightedImplId(ex.impl_id)}
               />
             )}
             {field && (

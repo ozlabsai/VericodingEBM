@@ -58,25 +58,32 @@ artifacts/*
 !artifacts/training/
 
 artifacts/real_bugs/*
-!artifacts/real_bugs/run10_no_surgery/
-!artifacts/real_bugs/run10_stripped/
-!artifacts/real_bugs/run10_token_masked/
-!artifacts/real_bugs/run10_stripped_sibsubset.jsonl
+!artifacts/real_bugs/hybrid_averse_no_surgery/
+!artifacts/real_bugs/hybrid_averse_stripped/
+!artifacts/real_bugs/hybrid_averse_token_masked/
+!artifacts/real_bugs/hybrid_averse_stripped_sibsubset.jsonl
+!artifacts/real_bugs/sentinel_reliant_no_surgery/
+!artifacts/real_bugs/sentinel_reliant_stripped/
 !artifacts/real_bugs/leak_audit.txt
 !artifacts/real_bugs/records.jsonl
 
-artifacts/real_bugs/run10_no_surgery/*
-!artifacts/real_bugs/run10_no_surgery/eval_records.jsonl
-!artifacts/real_bugs/run10_no_surgery/analysis.txt
-artifacts/real_bugs/run10_stripped/*
-!artifacts/real_bugs/run10_stripped/eval_records.jsonl
-!artifacts/real_bugs/run10_stripped/analysis.txt
-artifacts/real_bugs/run10_token_masked/*
-!artifacts/real_bugs/run10_token_masked/eval_records.jsonl
+artifacts/real_bugs/hybrid_averse_no_surgery/*
+!artifacts/real_bugs/hybrid_averse_no_surgery/eval_records.jsonl
+!artifacts/real_bugs/hybrid_averse_no_surgery/analysis.txt
+artifacts/real_bugs/hybrid_averse_stripped/*
+!artifacts/real_bugs/hybrid_averse_stripped/eval_records.jsonl
+!artifacts/real_bugs/hybrid_averse_stripped/analysis.txt
+artifacts/real_bugs/hybrid_averse_token_masked/*
+!artifacts/real_bugs/hybrid_averse_token_masked/eval_records.jsonl
+artifacts/real_bugs/sentinel_reliant_no_surgery/*
+!artifacts/real_bugs/sentinel_reliant_no_surgery/eval_records.jsonl
+!artifacts/real_bugs/sentinel_reliant_no_surgery/analysis.txt
+artifacts/real_bugs/sentinel_reliant_stripped/*
+!artifacts/real_bugs/sentinel_reliant_stripped/eval_records.jsonl
 
-artifacts/run7_step500/*
-!artifacts/run7_step500/no_surgery.jsonl
-!artifacts/run7_step500/stripped.jsonl
+artifacts/sentinel_reliant/*
+!artifacts/sentinel_reliant/no_surgery.jsonl
+!artifacts/sentinel_reliant/stripped.jsonl
 !artifacts/run7_step500/token_masked.jsonl
 
 artifacts/run11b/*.tmp

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import EnergyLandscape3D from './EnergyLandscape3D'
+import EnergyLandscape3D, { type Landscape3DExample } from './EnergyLandscape3D'
 import LineEditor from './LineEditor'
 import { fetchEnergyField, descend, type EnergyField, type ScoreLineResponse, type Trajectory } from './api'
 
@@ -28,6 +28,8 @@ export default function LandscapePage3D() {
   const [trajStep, setTrajStep] = useState(0)
   const [scoreInfo, setScoreInfo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [examples, setExamples] = useState<Landscape3DExample[]>([])
+  const [highlightedImplId, setHighlightedImplId] = useState<string | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -35,6 +37,14 @@ export default function LandscapePage3D() {
       .then(f => { setField(f); setLoading(false) })
       .catch(e => { setLoading(false); console.error(e) })
   }, [scope, grid, smoothness])
+
+  useEffect(() => {
+    const base = `${(import.meta as any).env?.BASE_URL ?? '/'}data`.replace(/\/+$/, '')
+    fetch(`${base}/examples.json`)
+      .then(r => r.ok ? r.json() : Promise.reject(`${r.status}`))
+      .then((es: Landscape3DExample[]) => setExamples(es))
+      .catch(e => console.warn('examples load failed:', e))
+  }, [])
 
   useEffect(() => {
     if (!trajectory) return
@@ -135,6 +145,9 @@ export default function LandscapePage3D() {
                 showPoints={showPoints}
                 showWireframe={showWireframe}
                 heightScale={heightScale}
+                examples={scope === 'impl' ? examples : undefined}
+                highlightedImplId={highlightedImplId}
+                onExampleClick={(ex) => setHighlightedImplId(ex.impl_id)}
               />
             )}
             {field && (

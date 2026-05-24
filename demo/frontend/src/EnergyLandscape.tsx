@@ -23,6 +23,15 @@ export type DescendResponse = {
   trajectory: { x: number; y: number; energy: number }[]
 }
 
+export type LandscapeExample = {
+  x: number
+  y: number
+  whole_impl_energy: number
+  category: 'model_win' | 'model_miss' | 'pass_low_energy'
+  label: string
+  impl_id: string
+}
+
 type Props = {
   field: EnergyField
   width: number
@@ -33,6 +42,9 @@ type Props = {
   onClick?: (x: number, y: number) => void
   showArrows?: boolean
   showPoints?: boolean
+  examples?: LandscapeExample[]
+  highlightedImplId?: string | null
+  onExampleClick?: (ex: LandscapeExample) => void
 }
 
 function fieldToImageData(field: EnergyField): ImageData {
@@ -65,7 +77,8 @@ function fieldToImageData(field: EnergyField): ImageData {
 
 export default function EnergyLandscape(props: Props) {
   const { field, width, height, userBall, trajectory, trajectoryStep, onClick,
-          showArrows = true, showPoints = true } = props
+          showArrows = true, showPoints = true,
+          examples, highlightedImplId, onExampleClick } = props
 
   // Convert field to an ImageBitmap (deck.gl BitmapLayer accepts this).
   const [bitmap, setBitmap] = useState<ImageBitmap | null>(null)
@@ -149,6 +162,35 @@ export default function EnergyLandscape(props: Props) {
     })
   }, [trajectory, trajectoryStep])
 
+  // Curated-example markers (rendered above heatmap, below ball). Color by
+  // category so a judge can scan win/miss/pass at a glance.
+  const examplesLayer = useMemo(() => {
+    if (!examples || examples.length === 0) return null
+    const colorOf = (c: LandscapeExample['category']): [number, number, number, number] => {
+      if (c === 'model_win') return [110, 220, 150, 240]
+      if (c === 'model_miss') return [240, 110, 120, 240]
+      return [120, 180, 240, 240]   // pass_low_energy
+    }
+    return new ScatterplotLayer({
+      id: 'examples',
+      data: examples,
+      getPosition: (d: LandscapeExample) => [d.x, d.y],
+      getFillColor: (d: LandscapeExample) => colorOf(d.category),
+      getLineColor: (d: LandscapeExample) =>
+        highlightedImplId === d.impl_id ? [255, 255, 255, 255] : [10, 10, 10, 200],
+      getLineWidth: (d: LandscapeExample) => (highlightedImplId === d.impl_id ? 3 : 1.5),
+      lineWidthUnits: 'pixels',
+      stroked: true,
+      filled: true,
+      getRadius: (d: LandscapeExample) => (highlightedImplId === d.impl_id ? 11 : 7),
+      radiusUnits: 'pixels',
+      pickable: true,
+      onClick: (info) => {
+        if (info.object && onExampleClick) onExampleClick(info.object as LandscapeExample)
+      },
+    })
+  }, [examples, highlightedImplId, onExampleClick])
+
   const ballLayer = useMemo(() => {
     // Show user's ball, OR the latest trajectory point.
     const ball = trajectory && trajectoryStep != null && trajectoryStep > 0
@@ -187,13 +229,23 @@ export default function EnergyLandscape(props: Props) {
       controller={true}
       views={new OrthographicView({ id: 'ortho' })}
       initialViewState={initialViewState}
-      layers={[heatmapLayer, arrowsLayer, arrowHeadsLayer, pointsLayer, trajectoryLayer, ballLayer].filter(Boolean)}
+      layers={[heatmapLayer, arrowsLayer, arrowHeadsLayer, pointsLayer, examplesLayer, trajectoryLayer, ballLayer].filter(Boolean)}
       onClick={(info) => {
         if (info.coordinate && onClick) onClick(info.coordinate[0], info.coordinate[1])
       }}
       getTooltip={({ object }) => {
         if (!object) return null
         const o = object as any
+        // Curated-example tooltip (richer).
+        if (o.label && o.category) {
+          return {
+            html: `<div style="background:#0d1117;color:#eee;padding:6px 8px;border:1px solid #30363d;border-radius:4px;font-size:11px;max-width:240px">
+              <div style="color:#f5a25d;margin-bottom:2px">${o.label}</div>
+              <div style="color:#aaa;font-size:10px">whole-impl E: ${o.whole_impl_energy.toFixed(3)}</div>
+              <div style="color:#666;font-size:10px;margin-top:2px;font-family:monospace">${o.impl_id}</div>
+            </div>`,
+          }
+        }
         if (o.energy == null) return null
         return {
           html: `<div style="background:#0d1117;color:#eee;padding:6px 8px;border:1px solid #30363d;border-radius:4px;font-size:11px">energy: <b>${o.energy.toFixed(3)}</b>${o.is_buggy ? ' • <span style="color:#f88">BUGGY</span>' : ''}</div>`,

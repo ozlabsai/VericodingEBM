@@ -208,7 +208,7 @@ def rsync_repo(ssh: dict) -> None:
         # Most artifacts skipped (transfer datasets, baselines, etc.) but the
         # real-bug records the post-train eval reads from must come along.
         "artifacts/baselines", "artifacts/stats", "artifacts/transfer",
-        "artifacts/ochiai_baseline", "artifacts/run7_step500",
+        "artifacts/ochiai_baseline", "artifacts/sentinel_reliant",
         "artifacts/ablations", "artifacts/training",
         # Stale per-pod logs from prior runs (kept in repo root by accident);
         # not needed remotely.
