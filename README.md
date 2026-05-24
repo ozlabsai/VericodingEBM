@@ -22,7 +22,7 @@ Submitted to the Apart × Atlas Computing **Secure Program Synthesis Hackathon, 
 | Closed-loop CEGIS repair@1 (n=100) | 25% (specialist-guided) | 30% (LLM self-judged) | LLM wins |
 | Marker-leak audit (top-1 delta when `// FAILS` markers stripped) | **−52pp** (averse) | **±5pp** (invariant) | both honest, opposite direction |
 
-**Honest one-liner.** The specialist beats every static baseline by a wide margin and matches a $200/run frontier LLM on per-line top-3; LLMs match or beat it on the two other measurements. The marker-leak audit reveals three regimes of `// FAILS` dependency in the wild. Full numbers and statistical tests in the paper.
+The specialist beats every static baseline by a wide margin and matches a $200/run frontier LLM on per-line top-3; LLMs match or beat it on the two other measurements. The marker-leak audit reveals three regimes of `// FAILS` dependency in the wild. Full numbers and statistical tests in the paper.
 
 ---
 
