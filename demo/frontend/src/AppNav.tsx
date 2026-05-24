@@ -49,13 +49,13 @@ export default function AppNav({ active, controls, meta }: Props) {
   return (
     <header className="sticky top-0 z-30 backdrop-blur-md bg-bg0/80 border-b border-line1 shrink-0">
       <div className="max-w-[1400px] mx-auto px-6 h-14 flex items-center gap-8">
-        {/* Wordmark — single optical weight, no mono sublabel attached */}
+        {/* Wordmark — circle dot to match the hero's live-status indicator */}
         <a href={withBase('/')} className="press flex items-center gap-2.5 group shrink-0">
-          <span className="inline-block w-1.5 h-1.5 rounded-sm bg-text0" />
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-text0" />
           <span className="text-text0 text-[15px] font-medium tracking-crisp">Where to Look</span>
         </a>
 
-        {/* Primary nav — real text size, sits on the same baseline as the wordmark */}
+        {/* Primary nav — section routes */}
         <nav className="flex items-center gap-1 text-[14px]">
           {ROUTES.map(r => (
             <a key={r.id}
@@ -77,19 +77,24 @@ export default function AppNav({ active, controls, meta }: Props) {
           </div>
         )}
 
-        {/* External links — demoted: smaller, lighter, separated from primary nav */}
-        <nav className="ml-auto flex items-center gap-3 text-[12px] text-text3">
+        {/* External links — same size & color as primary nav. Demoted only by
+         *  position (right side) and by lack of active state, not by shrinking. */}
+        <nav className="ml-auto flex items-center gap-1 text-[14px]">
           <a href={withBase('/')}
-             className={`press transition-colors ${active === 'home' ? 'text-text0' : 'hover:text-text1'}`}>
+             className={`press px-2.5 py-1.5 rounded-md transition-colors ${
+               active === 'home'
+                 ? 'text-text0 bg-bg2'
+                 : 'text-text2 hover:text-text0 hover:bg-bg1'
+             }`}>
             Home
           </a>
-          <span className="w-px h-3 bg-line2" />
+          <span className="w-px h-3.5 bg-line2 mx-1" />
           <a href="https://github.com/ozlabsai/VericodingEBM" target="_blank" rel="noreferrer"
-             className="press hover:text-text1 transition-colors">GitHub<ExternalArrow /></a>
+             className="press px-2.5 py-1.5 rounded-md text-text2 hover:text-text0 hover:bg-bg1 transition-colors">GitHub<ExternalArrow /></a>
           <a href="https://huggingface.co/OzLabs/VericodingEBM" target="_blank" rel="noreferrer"
-             className="press hover:text-text1 transition-colors">Model<ExternalArrow /></a>
+             className="press px-2.5 py-1.5 rounded-md text-text2 hover:text-text0 hover:bg-bg1 transition-colors">Model<ExternalArrow /></a>
           <a href="https://github.com/ozlabsai/VericodingEBM/blob/main/paper/main.pdf" target="_blank" rel="noreferrer"
-             className="press hover:text-text1 transition-colors">Paper<ExternalArrow /></a>
+             className="press px-2.5 py-1.5 rounded-md text-text2 hover:text-text0 hover:bg-bg1 transition-colors">Paper<ExternalArrow /></a>
         </nav>
       </div>
 
