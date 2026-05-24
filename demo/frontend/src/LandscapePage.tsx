@@ -107,7 +107,7 @@ export default function LandscapePage() {
           EBM <span className="text-zinc-500">energy landscape (run #10)</span>
         </h1>
         <nav className="flex gap-2 text-xs">
-          <a href="/" className="text-zinc-500 hover:text-zinc-300">manifold</a>
+          <a href="/manifold" className="text-zinc-500 hover:text-zinc-300">manifold</a>
           <span className="text-zinc-700">|</span>
           <a href="/landscape" className="text-accent font-medium">landscape 2D</a>
           <span className="text-zinc-700">|</span>

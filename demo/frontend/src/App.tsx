@@ -151,7 +151,7 @@ export default function App() {
           EBM <span className="text-zinc-500">energy manifold (run #10)</span>
         </h1>
         <nav className="flex gap-2 text-xs">
-          <a href="/" className="text-accent font-medium">manifold</a>
+          <a href="/manifold" className="text-accent font-medium">manifold</a>
           <span className="text-zinc-700">|</span>
           <a href="/landscape" className="text-zinc-500 hover:text-zinc-300">landscape 2D</a>
           <span className="text-zinc-700">|</span>
