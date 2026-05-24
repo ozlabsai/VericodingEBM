@@ -197,20 +197,26 @@ export default function LandingHeroFigure() {
       style={{ aspectRatio: '16 / 7', minHeight: 220 }}
     >
       <canvas ref={canvasRef} className="absolute inset-0 block" />
-      {/* Top-left caption */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-0.5 pointer-events-none">
-        <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-text3">live · Hybrid-Averse · 1492 impls</div>
-        <div className="text-xs font-mono text-text2">UMAP of whole-impl embeddings, colored by energy</div>
+      {/* Top-left caption — backdrop pill so it stays legible over points */}
+      <div className="absolute top-3 left-3 z-10 pointer-events-none">
+        <div className="inline-flex flex-col gap-0.5 bg-bg0/85 backdrop-blur border border-line1 rounded px-2.5 py-1.5">
+          <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-text3">
+            live · Hybrid-Averse · 1,492 impls
+          </div>
+          <div className="text-[11px] font-mono text-text2">
+            UMAP of whole-impl embeddings · colored by energy
+          </div>
+        </div>
       </div>
       {/* Hover readout */}
       <div className="absolute bottom-3 right-3 z-10 font-mono text-[11px] text-text1 bg-bg0/70 border border-line1 rounded px-2 py-1 backdrop-blur transition-opacity duration-200"
            style={{ opacity: hoverLabel ? 1 : 0 }}>
         {hoverLabel ?? '—'}
       </div>
-      {/* Legend — matches d3 interpolateInferno used by /manifold */}
-      <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2 text-[10px] font-mono text-text3">
+      {/* Legend — backdrop pill, matches the demo's EnergyLegend chip */}
+      <div className="absolute bottom-3 left-3 z-10 bg-bg0/85 backdrop-blur border border-line1 rounded px-2.5 py-1.5 flex items-center gap-2 text-[10px] font-mono text-text3">
         <span>low&nbsp;E</span>
-        <span className="inline-block h-1 w-24 rounded"
+        <span className="inline-block h-1.5 w-28 rounded-sm"
               style={{ background: 'linear-gradient(to right, #000004, #1b0c41, #4a0c6b, #781c6d, #a52c60, #cf4446, #ed6925, #fb9b06, #f7d13d, #fcffa4)' }} />
         <span>high&nbsp;E</span>
       </div>

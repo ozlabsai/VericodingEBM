@@ -18,8 +18,8 @@ body {
   font-family: 'Clash Grotesk', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: oklch(13% 0.010 250);
-  color: oklch(70% 0.008 250);
+  background: oklch(11% 0.045 285);
+  color: oklch(80% 0.020 285);
 }
 
 .deck-tooltip {
@@ -54,8 +54,8 @@ body {
 }
 
 /* Hard 1px hairlines that look like 0.5px on retina */
-.hairline-t { box-shadow: inset 0 1px 0 oklch(26% 0.012 250); }
-.hairline-b { box-shadow: inset 0 -1px 0 oklch(26% 0.012 250); }
+.hairline-t { box-shadow: inset 0 1px 0 oklch(26% 0.055 285); }
+.hairline-b { box-shadow: inset 0 -1px 0 oklch(26% 0.055 285); }
 
 /* prefers-reduced-motion: drop position-based motion */
 @media (prefers-reduced-motion: reduce) {
