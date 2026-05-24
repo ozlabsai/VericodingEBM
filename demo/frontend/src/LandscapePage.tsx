@@ -102,16 +102,15 @@ export default function LandscapePage() {
 
   return (
     <div className="h-screen flex flex-col">
-      <header className="bg-panel border-b border-border px-4 py-2 flex items-center gap-4">
-        <h1 className="text-sm font-semibold tracking-tight">
-          EBM <span className="text-zinc-500">energy landscape (run #10)</span>
-        </h1>
-        <nav className="flex gap-2 text-xs">
-          <a href="/manifold" className="text-zinc-500 hover:text-zinc-300">manifold</a>
-          <span className="text-zinc-700">|</span>
-          <a href="/landscape" className="text-accent font-medium">landscape 2D</a>
-          <span className="text-zinc-700">|</span>
-          <a href="/landscape3d" className="text-zinc-500 hover:text-zinc-300">landscape 3D</a>
+      <header className="bg-ink/80 backdrop-blur-md border-b border-border px-4 py-2.5 flex items-center gap-5">
+        <a href="/" className="flex items-baseline gap-2">
+          <span className="font-serif italic text-base text-fg leading-none">VericodingEBM</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">landscape 2d</span>
+        </a>
+        <nav className="flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.16em]">
+          <a href="/manifold"    className="px-2 py-1 rounded text-muted hover:text-fg transition-colors">manifold</a>
+          <a href="/landscape"   className="px-2 py-1 rounded text-accent">2d</a>
+          <a href="/landscape3d" className="px-2 py-1 rounded text-muted hover:text-fg transition-colors">3d</a>
         </nav>
         <div className="ml-auto flex items-center gap-3 text-xs">
           <label className="flex items-center gap-1">

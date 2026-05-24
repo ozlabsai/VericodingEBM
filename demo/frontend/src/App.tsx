@@ -146,22 +146,25 @@ export default function App() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-panel border-b border-border px-4 py-2 flex items-center gap-4">
-        <h1 className="text-sm font-semibold tracking-tight">
-          EBM <span className="text-zinc-500">energy manifold (run #10)</span>
-        </h1>
-        <nav className="flex gap-2 text-xs">
-          <a href="/manifold" className="text-accent font-medium">manifold</a>
-          <span className="text-zinc-700">|</span>
-          <a href="/landscape" className="text-zinc-500 hover:text-zinc-300">landscape 2D</a>
-          <span className="text-zinc-700">|</span>
-          <a href="/landscape3d" className="text-zinc-500 hover:text-zinc-300">landscape 3D</a>
+      <header className="bg-ink/80 backdrop-blur-md border-b border-border px-4 py-2.5 flex items-center gap-5">
+        <a href="/" className="flex items-baseline gap-2 group">
+          <span className="font-serif italic text-base text-fg leading-none">VericodingEBM</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">manifold</span>
+        </a>
+        <nav className="flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.16em]">
+          <a href="/manifold"    className="px-2 py-1 rounded text-accent">manifold</a>
+          <a href="/landscape"   className="px-2 py-1 rounded text-muted hover:text-fg transition-colors">2d</a>
+          <a href="/landscape3d" className="px-2 py-1 rounded text-muted hover:text-fg transition-colors">3d</a>
         </nav>
-        <div className="text-xs text-zinc-400">
-          {impls.length.toLocaleString()} impls · {allLines.length.toLocaleString()} lines · {impls.filter(i => i.status === 'fail').length} FAIL
+        <div className="font-mono text-[11px] text-body/80 tabular-display">
+          {impls.length.toLocaleString()} <span className="text-muted">impls</span>
+          <span className="text-border mx-1.5">·</span>
+          {allLines.length.toLocaleString()} <span className="text-muted">lines</span>
+          <span className="text-border mx-1.5">·</span>
+          <span className="text-warm">{impls.filter(i => i.status === 'fail').length}</span> <span className="text-muted">fail</span>
         </div>
-        <div className="ml-auto text-xs text-zinc-500">
-          {hoverInfo ?? 'click an impl on the left to drill in · paste your own code on the right'}
+        <div className="ml-auto text-xs text-muted">
+          {hoverInfo ?? 'click an impl on the left to drill in · use the corruption lab on the right'}
         </div>
       </header>
 
