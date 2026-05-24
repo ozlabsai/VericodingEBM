@@ -68,6 +68,15 @@
 \begin{document}
 \maketitle
 
+\begin{center}
+\small
+\textbf{Artifacts:}
+\href{https://github.com/ozlabsai/VericodingEBM}{\texttt{github.com/ozlabsai/VericodingEBM}}\quad
+\href{https://huggingface.co/OzLabs/VericodingEBM}{\texttt{HF model: OzLabs/VericodingEBM}}\quad
+\href{https://huggingface.co/datasets/OzLabs/VericodingEBM-data}{\texttt{HF dataset: OzLabs/VericodingEBM-data}}\quad
+\href{https://ozlabsai.github.io/VericodingEBM}{\texttt{live demo}}
+\end{center}
+
 % =============================================================================
 \begin{abstract}
 We study per-line fault localization for Verus, the Rust-based
@@ -100,6 +109,17 @@ feedback~\cite{verus_training_data}. When a draft fails, a useful
 next signal is \emph{where} to repair: a localizer could focus a
 CEGIS-style~\cite{cegis} repair loop on the top-$k$ suspicious lines
 instead of resampling the whole implementation.
+
+\paragraph{AI safety motivation.}
+The safety case is scalable oversight for AI-written high-assurance
+software. As frontier models increasingly draft and repair code, formal
+verification can become an important guardrail for systems whose failures
+matter: access control, screening, lab automation, audit logging, and
+other high-consequence biosecurity infrastructure. But a
+verifier-in-the-loop workflow is useful only if humans and repair agents
+can audit where the proof or implementation is likely wrong. Line-level
+localization turns a failed proof into a ranked, inspectable set of
+places to scrutinize before accepting or repairing AI-generated code.
 
 We cast this as discriminative energy-based modeling in the LeCun
 sense~\cite{lecun2006tutorial}. Given a spec and implementation, the
@@ -140,6 +160,15 @@ through \texttt{// FAILS}/\texttt{// FIXME} markers.
   beat it on ranking, discrimination, and CEGIS repair
   (\Cref{sec:results:llm-zeroshot,sec:results:cegis}).
 \end{enumerate}
+
+\paragraph{What is new in this hackathon.}
+This submission's new work is the Verus line-localization system and
+evaluation package: the dev-test scraper and line-labeled corpus, LoRA
+training runs for the LSE and scalar-head variants, the scalar-head
+hybrid architecture, the strip-FAILS audit, static/LLM/CEGIS baselines,
+plots, and report. We build on public Verus tooling, the Microsoft Verus
+Training Data, Qwen2.5-Coder, LoRA, EBMs, ListNet, and standard CEGIS
+ideas; those components are prior work, not claimed as new.
 
 \paragraph{Scope.} We evaluate per-line fault localization on
 hand-authored Verus failing tests and a closed-loop CEGIS
@@ -921,7 +950,7 @@ position prior. Seed variance remains a limitation
 is released for re-auditing future models with the same record schema.
 
 % =============================================================================
-\section{Discussion and Limitations}
+\section{Discussion}
 \label{sec:discussion}
 
 \paragraph{What this paper claims.} The headline is
@@ -987,6 +1016,10 @@ modeling.
   follow-up.
 \end{enumerate}
 
+The required appendix ``Limitations and Dual-Use Considerations''
+summarizes these risks in submission-checklist form and adds the
+dual-use analysis.
+
 \paragraph{Implications for scalable oversight of AI-written code.}
 With current frontier LLMs as proposer/rewriter, this small specialist
 is not the differentiating component in our CEGIS loop. That does not
@@ -1023,7 +1056,10 @@ OOD Verus features, and routing/ensemble approaches.
 % =============================================================================
 \section*{Code and Data}
 \begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
-\item Code: \url{https://github.com/guynachshon/verificationHackathon}
+\item Code repository: \url{https://github.com/ozlabsai/VericodingEBM}
+\item Live demo: \url{https://ozlabsai.github.io/VericodingEBM}
+\item Hugging Face model: \url{https://huggingface.co/OzLabs/VericodingEBM}
+\item Hugging Face dataset: \url{https://huggingface.co/datasets/OzLabs/VericodingEBM-data}
 \item Verus dev-test corpus: \texttt{artifacts/real\_bugs/records.jsonl}
   (1{,}492 records, 609 FAIL-with-labels, derived from
   \texttt{verus-lang/verus} test suite at HEAD).
@@ -1300,6 +1336,46 @@ T.-Y.~Lin, P.~Goyal, R.~Girshick, K.~He, P.~Dollár.
 
 % =============================================================================
 \appendix
+\section{Limitations and Dual-Use Considerations}
+\label{app:limitations-dual-use}
+
+\paragraph{Limitations.}
+The main technical risks are false localization, benchmark mismatch,
+and scalability. False positives can waste repair budget on harmless
+lines; false negatives can hide the proof obligation or implementation
+line that actually needs attention. The Verus dev-test set is drawn
+from hand-authored test-suite failures, not deployed biosecurity or
+production-verification incidents, so edge cases such as multi-file
+proofs, library specifications, concurrency reasoning, solver
+timeouts, and postcondition failures may be underrepresented. The
+closed-loop CEGIS study is also small ($n=100$) and single-line; it
+does not establish repair gains for multi-bug programs or long
+verification pipelines. Finally, the model is single-seed and
+Verus-specific; transfer to Dafny, F\textsuperscript{*}, or ordinary
+Rust should be treated as unvalidated.
+
+\paragraph{Future improvements.}
+The highest-priority follow-ups are a larger CEGIS evaluation,
+multi-seed LoRA ensembles, multi-file Verus benchmarks, OOD tests on
+new Verus features, a global-attention head for nonlocal
+\texttt{ensures}-clause failures, and routing policies that decide when
+to trust the specialist versus a frontier LLM localizer. For
+biosecurity-relevant deployment, the localizer should be evaluated on
+representative access-control, screening, audit-log, and lab-automation
+verification tasks rather than only on upstream Verus tests.
+
+\paragraph{Dual-use considerations.}
+The intended use is defensive: helping researchers audit and repair
+formally verified code that protects high-consequence systems. The same
+localization signal could also reduce the cost of modifying verified
+systems, including attempts to bypass safety checks or weaken
+specifications. We therefore recommend releasing artifacts with clear
+provenance, benchmark-only examples, and verifier logs; using the tool
+as an advisory signal rather than an automatic patch acceptor; requiring
+human review for security- or biosecurity-relevant code; and tracking
+whether the model points to specification lines whose weakening would
+make unsafe behavior easier rather than harder to prevent.
+
 \section{Additional results}
 \label{app:additional}
 
