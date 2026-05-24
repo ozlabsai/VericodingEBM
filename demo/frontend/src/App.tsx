@@ -3,6 +3,8 @@ import ManifoldScatter, { type ScatterPoint } from './ManifoldScatter'
 import LineEditor from './LineEditor'
 import ExamplesPicker from './ExamplesPicker'
 import CorruptionLab from './CorruptionLab'
+import EnergyLegend from './EnergyLegend'
+import AppNav from './AppNav'
 import { fetchImpls, fetchLines, fetchImplDetail, IS_STATIC_MODE, type ImplPoint, type LinePoint, type ImplDetail, type ScoreLineResponse } from './api'
 
 const SAMPLE_SPEC = `// Returns the sum of two non-negative integers.
@@ -143,32 +145,19 @@ export default function App() {
     } as ScoreLineResponse)
   }
 
+  const navMeta = (
+    <>
+      <span className="tabular">{impls.length.toLocaleString()} impls</span>
+      <span className="text-line2">·</span>
+      <span className="tabular">{allLines.length.toLocaleString()} lines</span>
+      <span className="text-line2">·</span>
+      <span className="tabular text-neg normal-case">{impls.filter(i => i.status === 'fail').length} fail</span>
+    </>
+  )
+
   return (
     <div className="h-[100dvh] flex flex-col bg-bg0">
-      {/* Header — matches landing Nav */}
-      <header className="hairline-b backdrop-blur-md bg-bg0/75 px-6 h-12 flex items-center gap-6 shrink-0">
-        <a href="/" className="flex items-baseline gap-2">
-          <span className="text-text0 text-sm font-medium tracking-crisp">Where to Look</span>
-          <span className="font-mono text-[10px] tabular text-text3">manifold</span>
-        </a>
-        <nav className="flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.14em]">
-          <a href="/manifold"    className="press px-2.5 py-1 rounded text-text0">manifold</a>
-          <a href="/landscape"   className="press px-2.5 py-1 rounded text-text3 hover:text-text1">2d</a>
-          <a href="/landscape3d" className="press px-2.5 py-1 rounded text-text3 hover:text-text1">3d</a>
-          <span className="px-2 text-line2">·</span>
-          <a href="/" className="press px-2.5 py-1 rounded text-text3 hover:text-text1">home</a>
-        </nav>
-        <div className="font-mono text-[11px] text-text2 tabular ml-2">
-          {impls.length.toLocaleString()} <span className="text-text3">impls</span>
-          <span className="text-line2 mx-1.5">·</span>
-          {allLines.length.toLocaleString()} <span className="text-text3">lines</span>
-          <span className="text-line2 mx-1.5">·</span>
-          <span className="text-neg">{impls.filter(i => i.status === 'fail').length}</span> <span className="text-text3">fail</span>
-        </div>
-        <div className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-text3 truncate">
-          {hoverInfo ?? 'click a point to drill in · corruption lab on the right'}
-        </div>
-      </header>
+      <AppNav active="manifold" meta={navMeta} />
 
       {/* Main — hairline-divided regions, not boxed cards */}
       <main className="flex-1 grid grid-cols-[1fr_1fr_380px] divide-x divide-line1 overflow-hidden">
@@ -190,6 +179,9 @@ export default function App() {
                 selectedKey={selectedImpl?.impl.impl_id ?? null}
               />
             )}
+            <div className="absolute bottom-3 left-3 z-10">
+              <EnergyLegend range={impls.length > 0 ? implEnergyRange : null} />
+            </div>
           </div>
         </section>
 
@@ -213,6 +205,9 @@ export default function App() {
                 energyRange={lineEnergyRange}
               />
             )}
+            <div className="absolute bottom-3 left-3 z-10">
+              <EnergyLegend range={allLines.length > 0 ? lineEnergyRange : null} />
+            </div>
           </div>
         </section>
 

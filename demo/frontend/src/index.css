@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+/* Clash Grotesk (Fontshare) + JetBrains Mono (Google Fonts).
+ * Fontshare license: free for personal and commercial use.
+ * https://www.fontshare.com/licenses/itf-ffl */
+@import url('https://api.fontshare.com/v2/css?f[]=clash-grotesk@400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,8 +15,7 @@
 
 html, body, #root { height: 100%; margin: 0; padding: 0; }
 body {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-feature-settings: 'cv11', 'ss03';
+  font-family: 'Clash Grotesk', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: oklch(13% 0.010 250);
@@ -20,7 +23,7 @@ body {
 }
 
 .deck-tooltip {
-  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace !important;
 }
 
 /* Mono digits + crisp tracking */

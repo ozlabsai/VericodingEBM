@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import EnergyLandscape, { type LandscapeExample } from './EnergyLandscape'
 import LineEditor from './LineEditor'
 import CorruptionLab from './CorruptionLab'
+import AppNav from './AppNav'
 import { fetchEnergyField, descend, IS_STATIC_MODE, type EnergyField, type ScoreLineResponse, type Trajectory } from './api'
 
 const SAMPLE_SPEC = `fn add(a: u32, b: u32) -> (s: u32)
@@ -101,48 +102,39 @@ export default function LandscapePage() {
   }
 
   const selectClass = "press bg-bg1 border border-line2 rounded font-mono text-[11px] text-text1 px-1.5 py-0.5 hover:border-text3"
+  const controls = (
+    <>
+      <label className="flex items-center gap-1.5">
+        <span>scope</span>
+        <select value={scope} onChange={e => setScope(e.target.value as any)} className={selectClass}>
+          <option value="impl">whole-impl</option>
+          <option value="line">per-line</option>
+        </select>
+      </label>
+      <label className="flex items-center gap-1.5">
+        <span>grid</span>
+        <select value={grid} onChange={e => setGrid(parseInt(e.target.value))} className={selectClass}>
+          <option value="64">64</option>
+          <option value="96">96</option>
+          <option value="128">128</option>
+          <option value="192">192</option>
+        </select>
+      </label>
+      <label className="press flex items-center gap-1.5 cursor-pointer hover:text-text1">
+        <input type="checkbox" checked={showArrows} onChange={e => setShowArrows(e.target.checked)} className="accent-accent" />
+        <span>arrows</span>
+      </label>
+      <label className="press flex items-center gap-1.5 cursor-pointer hover:text-text1">
+        <input type="checkbox" checked={showPoints} onChange={e => setShowPoints(e.target.checked)} className="accent-accent" />
+        <span>points</span>
+      </label>
+      {loading && <span className="text-accent ml-auto">loading…</span>}
+    </>
+  )
+
   return (
     <div className="h-[100dvh] flex flex-col bg-bg0">
-      <header className="hairline-b backdrop-blur-md bg-bg0/75 px-6 h-12 flex items-center gap-6 shrink-0">
-        <a href="/" className="flex items-baseline gap-2">
-          <span className="text-text0 text-sm font-medium tracking-crisp">Where to Look</span>
-          <span className="font-mono text-[10px] tabular text-text3">landscape 2d</span>
-        </a>
-        <nav className="flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.14em]">
-          <a href="/manifold"    className="press px-2.5 py-1 rounded text-text3 hover:text-text1">manifold</a>
-          <a href="/landscape"   className="press px-2.5 py-1 rounded text-text0">2d</a>
-          <a href="/landscape3d" className="press px-2.5 py-1 rounded text-text3 hover:text-text1">3d</a>
-          <span className="px-2 text-line2">·</span>
-          <a href="/" className="press px-2.5 py-1 rounded text-text3 hover:text-text1">home</a>
-        </nav>
-        <div className="ml-auto flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.14em] text-text3">
-          <label className="flex items-center gap-1.5">
-            <span>scope</span>
-            <select value={scope} onChange={e => setScope(e.target.value as any)} className={selectClass}>
-              <option value="impl">whole-impl</option>
-              <option value="line">per-line</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-1.5">
-            <span>grid</span>
-            <select value={grid} onChange={e => setGrid(parseInt(e.target.value))} className={selectClass}>
-              <option value="64">64</option>
-              <option value="96">96</option>
-              <option value="128">128</option>
-              <option value="192">192</option>
-            </select>
-          </label>
-          <label className="press flex items-center gap-1.5 cursor-pointer hover:text-text1">
-            <input type="checkbox" checked={showArrows} onChange={e => setShowArrows(e.target.checked)} className="accent-accent" />
-            <span>arrows</span>
-          </label>
-          <label className="press flex items-center gap-1.5 cursor-pointer hover:text-text1">
-            <input type="checkbox" checked={showPoints} onChange={e => setShowPoints(e.target.checked)} className="accent-accent" />
-            <span>points</span>
-          </label>
-          {loading && <span className="text-accent">loading…</span>}
-        </div>
-      </header>
+      <AppNav active="landscape" controls={controls} />
 
       <main className="flex-1 grid grid-cols-[1fr_380px] divide-x divide-line1 overflow-hidden">
         <section className="flex flex-col overflow-hidden">

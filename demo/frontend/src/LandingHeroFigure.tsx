@@ -13,6 +13,7 @@
  *   - Degrades to a static svg if the data fetch fails (no broken hero)
  */
 import { useEffect, useRef, useState } from 'react'
+import { interpolateInferno } from 'd3-scale-chromatic'
 
 type ImplPoint = {
   impl_id: string
@@ -24,30 +25,13 @@ type ImplPoint = {
 
 type CanvasSize = { w: number; h: number }
 
-const LERP = (a: number, b: number, t: number) => a + (b - a) * t
-
-// Pastel-warm palette mapped to energy percentile.
-// Low energy (good) → cool teal; high energy (suspicious) → warm amber.
-function energyToColor(t: number): [number, number, number, number] {
-  // t in [0, 1] — magma-like, warm-biased
-  const stops: [number, [number, number, number]][] = [
-    [0.00, [ 30, 50, 78]],
-    [0.30, [ 80,130,165]],
-    [0.55, [180,160,140]],
-    [0.78, [225,150, 90]],
-    [1.00, [240,110, 65]],
-  ]
-  let lo = stops[0], hi = stops[stops.length - 1]
-  for (let i = 1; i < stops.length; i++) {
-    if (t <= stops[i][0]) { lo = stops[i - 1]; hi = stops[i]; break }
-  }
-  const localT = (t - lo[0]) / Math.max(1e-6, hi[0] - lo[0])
-  return [
-    Math.round(LERP(lo[1][0], hi[1][0], localT)),
-    Math.round(LERP(lo[1][1], hi[1][1], localT)),
-    Math.round(LERP(lo[1][2], hi[1][2], localT)),
-    255,
-  ]
+// Inferno colormap matches the demo's ManifoldScatter (d3 interpolateInferno).
+// Low energy → near-black indigo; high energy → bright yellow.
+function energyToRgb(t: number): [number, number, number] {
+  const s = interpolateInferno(Math.max(0, Math.min(1, t)))
+  const m = s.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/)
+  if (!m) return [128, 128, 128]
+  return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])]
 }
 
 export default function LandingHeroFigure() {
@@ -167,7 +151,7 @@ export default function LandingHeroFigure() {
           if (d2 < cursorR2 * 4 && d2 < nearestDist) { nearestDist = d2; nearestPoint = p }
         }
 
-        const [r1, g1, b1] = energyToColor(normE)
+        const [r1, g1, b1] = energyToRgb(normE)
         ctx.fillStyle = `rgba(${r1}, ${g1}, ${b1}, ${0.55 + normE * 0.35})`
         ctx.beginPath()
         ctx.arc(px, py, r, 0, Math.PI * 2)
@@ -204,30 +188,30 @@ export default function LandingHeroFigure() {
       ref={wrapRef}
       onMouseMove={handleMouse}
       onMouseLeave={handleLeave}
-      className="relative w-full overflow-hidden rounded-xl border border-border bg-ink-2 grain"
+      className="relative w-full overflow-hidden rounded-xl border border-line1 bg-bg1"
       style={{ aspectRatio: '16 / 7', minHeight: 220 }}
     >
       <canvas ref={canvasRef} className="absolute inset-0 block" />
       {/* Top-left caption */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-0.5 pointer-events-none">
-        <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted">live · Hybrid-Averse · 1492 impls</div>
-        <div className="text-xs font-mono text-body/80">UMAP of whole-impl embeddings, colored by energy</div>
+        <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-text3">live · Hybrid-Averse · 1492 impls</div>
+        <div className="text-xs font-mono text-text2">UMAP of whole-impl embeddings, colored by energy</div>
       </div>
       {/* Hover readout */}
-      <div className="absolute bottom-3 right-3 z-10 font-mono text-[11px] text-body/90 bg-ink/70 border border-border rounded px-2 py-1 backdrop-blur transition-opacity duration-200"
+      <div className="absolute bottom-3 right-3 z-10 font-mono text-[11px] text-text1 bg-bg0/70 border border-line1 rounded px-2 py-1 backdrop-blur transition-opacity duration-200"
            style={{ opacity: hoverLabel ? 1 : 0 }}>
         {hoverLabel ?? '—'}
       </div>
-      {/* Legend */}
-      <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2 text-[10px] font-mono text-muted">
+      {/* Legend — matches d3 interpolateInferno used by /manifold */}
+      <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2 text-[10px] font-mono text-text3">
         <span>low&nbsp;E</span>
         <span className="inline-block h-1 w-24 rounded"
-              style={{ background: 'linear-gradient(to right, rgb(30,50,78), rgb(80,130,165), rgb(180,160,140), rgb(225,150,90), rgb(240,110,65))' }} />
+              style={{ background: 'linear-gradient(to right, #000004, #1b0c41, #4a0c6b, #781c6d, #a52c60, #cf4446, #ed6925, #fb9b06, #f7d13d, #fcffa4)' }} />
         <span>high&nbsp;E</span>
       </div>
       {/* Loading shimmer */}
       {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center text-[11px] font-mono text-muted">
+        <div className="absolute inset-0 flex items-center justify-center text-[11px] font-mono text-text3">
           loading manifold…
         </div>
       )}

@@ -18,6 +18,7 @@ import LandingHeroFigure from './LandingHeroFigure'
 import HeroPerLineFigure from './HeroPerLineFigure'
 import TrainingArcFigure from './TrainingArcFigure'
 import LandingRegimeFigure from './LandingRegimeFigure'
+import AppNav from './AppNav'
 
 function useReveal<T extends HTMLElement>() {
   const ref = useRef<T>(null)
@@ -33,30 +34,7 @@ function useReveal<T extends HTMLElement>() {
   return ref
 }
 
-function Nav() {
-  return (
-    <header className="sticky top-0 z-30 backdrop-blur-md bg-bg0/75 hairline-b">
-      <div className="max-w-[1400px] mx-auto px-6 h-12 flex items-center gap-6">
-        <a href="/" className="flex items-baseline gap-2">
-          <span className="text-text0 text-sm font-medium tracking-crisp">Where to Look</span>
-          <span className="font-mono text-[10px] tabular text-text3">EBM · Verus</span>
-        </a>
-        <nav className="ml-auto flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.14em]">
-          <a href="/manifold"    className="press px-2.5 py-1 rounded text-text3 hover:text-text1">manifold</a>
-          <a href="/landscape"   className="press px-2.5 py-1 rounded text-text3 hover:text-text1">2d</a>
-          <a href="/landscape3d" className="press px-2.5 py-1 rounded text-text3 hover:text-text1">3d</a>
-          <span className="px-2 text-line2">·</span>
-          <a href="https://github.com/ozlabsai/VericodingEBM" target="_blank" rel="noreferrer"
-             className="press px-2.5 py-1 rounded text-text3 hover:text-text1">github</a>
-          <a href="https://huggingface.co/OzLabs/VericodingEBM" target="_blank" rel="noreferrer"
-             className="press px-2.5 py-1 rounded text-text3 hover:text-text1">model</a>
-          <a href="https://github.com/ozlabsai/VericodingEBM/blob/main/paper/main.pdf" target="_blank" rel="noreferrer"
-             className="press px-2.5 py-1 rounded text-text3 hover:text-text1">paper</a>
-        </nav>
-      </div>
-    </header>
-  )
-}
+function Nav() { return <AppNav active="home" /> }
 
 // ─── HERO — UMAP figure right, paper-style title left ───────────────────
 function Hero() {

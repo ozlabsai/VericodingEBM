@@ -43,8 +43,10 @@ export default {
         success:   'oklch(78% 0.155 152)',
       },
       fontFamily: {
-        sans: ['Geist', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
-        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        // Clash Grotesk via Fontshare (free, OFL-equivalent license).
+        // Distinctive geometric grotesk — breaks the AI-default Inter reflex.
+        sans: ['"Clash Grotesk"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       letterSpacing: {
         'editorial': '-0.045em',
