@@ -1,0 +1,186 @@
+[
+  {
+    "impl_id": "verus-real-match-329b5a3c6511-fail-test1_fails-0",
+    "category": "model_win",
+    "label": "Model top-1 = gold bug",
+    "blurb": "Model's highest-energy line is one of the gold-labeled buggy lines.",
+    "stats": {
+      "n_lines": 23,
+      "n_buggy": 1,
+      "top1_energy": -1.6794092655181885,
+      "top1_line_idx": 20
+    }
+  },
+  {
+    "impl_id": "verus-real-loops-b620c1b9261f-fail-test_variables_havoc_nested-4",
+    "category": "model_win",
+    "label": "Model top-1 = gold bug",
+    "blurb": "Model's highest-energy line is one of the gold-labeled buggy lines.",
+    "stats": {
+      "n_lines": 17,
+      "n_buggy": 1,
+      "top1_energy": -4.065792560577393,
+      "top1_line_idx": 14
+    }
+  },
+  {
+    "impl_id": "verus-real-integer_ring-6b47daab383f-fail-div_by_zero_fail-4",
+    "category": "model_win",
+    "label": "Model top-1 = gold bug",
+    "blurb": "Model's highest-energy line is one of the gold-labeled buggy lines.",
+    "stats": {
+      "n_lines": 8,
+      "n_buggy": 1,
+      "top1_energy": -2.3478376865386963,
+      "top1_line_idx": 6
+    }
+  },
+  {
+    "impl_id": "verus-real-scope-da39a3ee5e6b-fail-test1_fails-0",
+    "category": "model_win",
+    "label": "Model top-1 = gold bug",
+    "blurb": "Model's highest-energy line is one of the gold-labeled buggy lines.",
+    "stats": {
+      "n_lines": 10,
+      "n_buggy": 1,
+      "top1_energy": -3.7255990505218506,
+      "top1_line_idx": 8
+    }
+  },
+  {
+    "impl_id": "verus-real-assert_by_compute-90698af23ac9-fail-default_impl_1_issue1406-10",
+    "category": "model_win",
+    "label": "Model top-1 = gold bug",
+    "blurb": "Model's highest-energy line is one of the gold-labeled buggy lines.",
+    "stats": {
+      "n_lines": 14,
+      "n_buggy": 1,
+      "top1_energy": -4.291623592376709,
+      "top1_line_idx": 12
+    }
+  },
+  {
+    "impl_id": "verus-real-traits-14220565a25f-fail-test_verify_6-48",
+    "category": "model_win",
+    "label": "Model top-1 = gold bug",
+    "blurb": "Model's highest-energy line is one of the gold-labeled buggy lines.",
+    "stats": {
+      "n_lines": 24,
+      "n_buggy": 2,
+      "top1_energy": -3.4990246295928955,
+      "top1_line_idx": 22
+    }
+  },
+  {
+    "impl_id": "verus-real-modes-80702303081f-fail-match_in_pure_expr-64",
+    "category": "model_win",
+    "label": "Model top-1 = gold bug",
+    "blurb": "Model's highest-energy line is one of the gold-labeled buggy lines.",
+    "stats": {
+      "n_lines": 9,
+      "n_buggy": 1,
+      "top1_energy": -4.125854015350342,
+      "top1_line_idx": 1
+    }
+  },
+  {
+    "impl_id": "verus-real-opaque_types-582cbcfe88e6-fail-test_return_opaque_type_reveal_real_type-1",
+    "category": "model_win",
+    "label": "Model top-1 = gold bug",
+    "blurb": "Model's highest-energy line is one of the gold-labeled buggy lines.",
+    "stats": {
+      "n_lines": 11,
+      "n_buggy": 1,
+      "top1_energy": -3.682386636734009,
+      "top1_line_idx": 9
+    }
+  },
+  {
+    "impl_id": "verus-real-adts-1940c966bbb4-fail-test_update2_fails-0",
+    "category": "model_miss",
+    "label": "Model top-1 \u2260 gold (honest miss)",
+    "blurb": "Model's top-1 line (6) is not the gold bug ([5]). Shown to be transparent about failure modes.",
+    "stats": {
+      "n_lines": 8,
+      "n_buggy": 1,
+      "top1_energy": -3.5674126148223877,
+      "top1_line_idx": 6
+    }
+  },
+  {
+    "impl_id": "verus-real-external_fn_specification-7c0867550a70-fail-test_basics-0",
+    "category": "model_miss",
+    "label": "Model top-1 \u2260 gold (honest miss)",
+    "blurb": "Model's top-1 line (12) is not the gold bug ([15, 19]). Shown to be transparent about failure modes.",
+    "stats": {
+      "n_lines": 21,
+      "n_buggy": 2,
+      "top1_energy": -1.7063446044921875,
+      "top1_line_idx": 12
+    }
+  },
+  {
+    "impl_id": "verus-real-external_fn_specification-f779ffb1cb56-fail-test_when_used_as_spec_modules-49",
+    "category": "model_miss",
+    "label": "Model top-1 \u2260 gold (honest miss)",
+    "blurb": "Model's top-1 line (15) is not the gold bug ([19]). Shown to be transparent about failure modes.",
+    "stats": {
+      "n_lines": 22,
+      "n_buggy": 1,
+      "top1_energy": -3.3586323261260986,
+      "top1_line_idx": 15
+    }
+  },
+  {
+    "impl_id": "verus-real-match-b5a763a28f68-fail-test_if_let2_fails1-11",
+    "category": "model_miss",
+    "label": "Model top-1 \u2260 gold (honest miss)",
+    "blurb": "Model's top-1 line (3) is not the gold bug ([5]). Shown to be transparent about failure modes.",
+    "stats": {
+      "n_lines": 8,
+      "n_buggy": 1,
+      "top1_energy": -3.1037395000457764,
+      "top1_line_idx": 3
+    }
+  },
+  {
+    "impl_id": "verus-real-assert_bitvector_by-2253af8ddec6-pass-test2-1",
+    "category": "pass_low_energy",
+    "label": "PASS impl, low energy",
+    "blurb": "Model assigns low energy across the board \u2014 model agrees this is clean.",
+    "stats": {
+      "n_lines": 9,
+      "whole_impl_energy": -24.71211051940918
+    }
+  },
+  {
+    "impl_id": "verus-real-loops-da39a3ee5e6b-pass-example_loop_continue-9",
+    "category": "pass_low_energy",
+    "label": "PASS impl, low energy",
+    "blurb": "Model assigns low energy across the board \u2014 model agrees this is clean.",
+    "stats": {
+      "n_lines": 19,
+      "whole_impl_energy": -19.89792823791504
+    }
+  },
+  {
+    "impl_id": "verus-real-quantifiers-be32d67719d5-pass-test1-0",
+    "category": "pass_low_energy",
+    "label": "PASS impl, low energy",
+    "blurb": "Model assigns low energy across the board \u2014 model agrees this is clean.",
+    "stats": {
+      "n_lines": 11,
+      "whole_impl_energy": -22.63016700744629
+    }
+  },
+  {
+    "impl_id": "verus-real-adts-1940c966bbb4-pass-test_update2-0",
+    "category": "pass_low_energy",
+    "label": "PASS impl, low energy",
+    "blurb": "Model assigns low energy across the board \u2014 model agrees this is clean.",
+    "stats": {
+      "n_lines": 9,
+      "whole_impl_energy": -8.462407112121582
+    }
+  }
+]

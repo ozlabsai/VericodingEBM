@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ManifoldScatter, { type ScatterPoint } from './ManifoldScatter'
 import LineEditor from './LineEditor'
+import ExamplesPicker from './ExamplesPicker'
 import { fetchImpls, fetchLines, fetchImplDetail, type ImplPoint, type LinePoint, type ImplDetail, type ScoreLineResponse } from './api'
 
 const SAMPLE_SPEC = `// Returns the sum of two non-negative integers.
@@ -113,15 +114,18 @@ export default function App() {
   }, [allLines])
 
   // --- Handlers ---
-  const handleImplClick = async (pt: ScatterPoint) => {
-    const id = pt.payload
-    if (typeof id !== 'string' || id === 'user') return
+  const loadImpl = async (id: string) => {
     try {
       const detail = await fetchImplDetail(id)
       setSelectedImpl(detail)
     } catch (e: any) {
       setHoverInfo(`fetch error: ${e.message}`)
     }
+  }
+  const handleImplClick = (pt: ScatterPoint) => {
+    const id = pt.payload
+    if (typeof id !== 'string' || id === 'user') return
+    loadImpl(id)
   }
 
   const handleScored = (resp: ScoreLineResponse, _spec: string, _impl: string) => {
@@ -196,8 +200,12 @@ export default function App() {
           </div>
         </div>
 
-        {/* Right rail: editor + selected impl detail */}
+        {/* Right rail: examples + editor + selected impl detail */}
         <aside className="flex flex-col gap-2 overflow-hidden">
+          <ExamplesPicker
+            onPick={loadImpl}
+            selectedId={selectedImpl?.impl.impl_id ?? null}
+          />
           <LineEditor
             initialSpec={SAMPLE_SPEC}
             initialImpl={SAMPLE_IMPL}
