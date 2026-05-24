@@ -114,8 +114,8 @@ export default function LandingHeroFigure() {
       const m = mouseRef.current
       if (m.in) {
         const halo = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 120)
-        halo.addColorStop(0, 'rgba(233, 92, 75, 0.10)')   // Opal Flame at low alpha
-        halo.addColorStop(1, 'rgba(233, 92, 75, 0)')
+        halo.addColorStop(0, 'rgba(1, 146, 198, 0.10)')   // Dynamic Blue at low alpha
+        halo.addColorStop(1, 'rgba(1, 146, 198, 0)')
         ctx.fillStyle = halo
         ctx.beginPath()
         ctx.arc(m.x, m.y, 120, 0, Math.PI * 2)
@@ -157,7 +157,7 @@ export default function LandingHeroFigure() {
       // Cursor label
       if (nearestPoint && nearestDist < cursorR2 * 4) {
         const [sx, sy] = toScreen(nearestPoint.x, nearestPoint.y)
-        ctx.strokeStyle = 'rgba(233, 92, 75, 0.85)'   // Opal Flame, opaque enough for light bg
+        ctx.strokeStyle = 'rgba(1, 146, 198, 0.85)'   // Dynamic Blue, opaque enough for light bg
         ctx.lineWidth = 1
         ctx.beginPath(); ctx.arc(sx, sy, 7, 0, Math.PI * 2); ctx.stroke()
         const label = `${nearestPoint.status.toUpperCase()} · E=${nearestPoint.whole_impl_energy.toFixed(2)}`

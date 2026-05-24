@@ -165,8 +165,11 @@ export default function HeroPerLineFigure() {
         </select>
       </div>
 
-      {/* MAIN — per-line bars + code */}
-      <div className="px-5 pt-5 pb-3 font-mono text-[12px] leading-[1.65] min-h-[280px]">
+      {/* MAIN — per-line bars + code.
+       * Content-sized (no min-height) — the audit examples are 5-12 lines;
+       * forcing a min-height creates the awkward empty band shown in the
+       * design review. Stagger reveal so 5-line variants still feel alive. */}
+      <div className="px-5 py-5 font-mono text-[12px] leading-[1.65]">
         {rows.map((row, i) => {
           const energy = row.perVariant[vIdx]
           const has = energy !== null && row.isScorable
@@ -177,12 +180,12 @@ export default function HeroPerLineFigure() {
           const topE = allFocusVariantEnergies.length ? Math.max(...allFocusVariantEnergies) : -Infinity
           const isTop = has && energy === topE
           return (
-            <div key={i} className="grid grid-cols-[28px_minmax(110px,180px)_1fr] gap-3 items-center">
-              <span className="text-right text-text3/60 tabular text-[10px]">{i + 1}</span>
+            <div key={i} className="grid grid-cols-[24px_minmax(90px,140px)_1fr] gap-3 items-center py-[1px]">
+              <span className="text-right text-text3/70 tabular text-[10px]">{i + 1}</span>
               <div className="relative h-3 bg-bg2 rounded-sm overflow-hidden">
                 {has && (
                   <div
-                    className={`absolute inset-y-0 left-0 ${isTop ? 'bg-accent' : 'bg-text3/45'}`}
+                    className={`absolute inset-y-0 left-0 ${isTop ? 'bg-accent' : 'bg-text3/35'}`}
                     style={{
                       width: `${Math.max(3, t * 100)}%`,
                       transition: 'width 600ms cubic-bezier(0.77, 0, 0.175, 1), background-color 200ms cubic-bezier(0.23, 1, 0.32, 1)',
@@ -190,12 +193,12 @@ export default function HeroPerLineFigure() {
                   />
                 )}
                 {has && (
-                  <span className="absolute inset-0 flex items-center justify-end pr-1.5 text-[9px] text-text1 tabular">
+                  <span className={`absolute inset-0 flex items-center justify-end pr-1.5 text-[9px] tabular ${isTop ? 'text-bg0' : 'text-text2'}`}>
                     {energy!.toFixed(2)}
                   </span>
                 )}
               </div>
-              <span className={`truncate whitespace-pre ${isTop ? 'text-text0' : has ? 'text-text2' : 'text-text3/60'}`}>
+              <span className={`truncate whitespace-pre ${isTop ? 'text-text0 font-medium' : has ? 'text-text2' : 'text-text3/60'}`}>
                 {row.text || ' '}
               </span>
             </div>

@@ -5,54 +5,59 @@ export default {
     extend: {
       colors: {
         // ─────────────────────────────────────────────────────────────────
-        // LIGHT-MODE palette: Gram's Hair (off-white) anchor +
-        // Bavarian Gentian (deep indigo) for text + Opal Flame (warm red)
-        // for the single accent. From the Suraj design boards.
+        // LIGHT-MODE palette anchored on board #5 (Suraj boards):
+        //   White Solid + Veiling Waterfalls (bg)
+        //   Fibonacci Blue #112358 → text/ink anchor
+        //   Dynamic Blue   #0192C6 → single accent (data/metric semantic)
+        //   Lemon Pie      #F1FF62 → reserved for callouts only (unused yet)
         //
-        // The ramp goes light → dark for bg, dark → light for text.
-        // Hue 285 throughout so neutrals carry the same indigo undertone
-        // as the accent palette. Chroma kept tiny on neutrals.
+        // Hue 245 throughout (slight cool tint) so neutrals carry the same
+        // navy undertone. Chroma tiny on neutrals; accent at full chroma.
         // ─────────────────────────────────────────────────────────────────
-        bg0:    'oklch(97% 0.004 285)',   // page background  (~Gram's Hair #F5F6F7)
-        bg1:    'oklch(94% 0.006 285)',   // raised panel / sub-band
-        bg2:    'oklch(90% 0.010 285)',   // hover / pressed
-        line1:  'oklch(86% 0.012 285)',   // 1px hairline
-        line2:  'oklch(78% 0.015 285)',   // emphasised hairline
-        text3:  'oklch(54% 0.030 285)',   // muted text
-        text2:  'oklch(38% 0.045 285)',   // body text
-        text1:  'oklch(22% 0.055 285)',   // high-emphasis text
-        text0:  'oklch(15% 0.060 285)',   // headlines (Bavarian Gentian, dimmed)
+        bg0:    'oklch(98% 0.005 245)',   // page background  (~White Solid #F4F5FA)
+        bg1:    'oklch(95% 0.010 245)',   // raised panel / sub-band  (~Veiling Waterfalls #D4EAFF tint)
+        bg2:    'oklch(91% 0.015 245)',   // hover / pressed
+        line1:  'oklch(86% 0.020 245)',   // 1px hairline
+        line2:  'oklch(76% 0.025 245)',   // emphasised hairline
+        text3:  'oklch(52% 0.045 245)',   // muted text
+        text2:  'oklch(36% 0.060 245)',   // body text
+        text1:  'oklch(22% 0.075 245)',   // high-emphasis text
+        text0:  'oklch(15% 0.090 245)',   // headlines (~Fibonacci Blue #112358)
 
-        // ONE accent — Opal Flame. High contrast on off-white, warm-red
-        // distinguishes it from the AI-default cobalt-blue.
-        accent:    'oklch(62% 0.180 27)',  // a touch deeper than dark-mode use for AA contrast
-        'accent-2':'oklch(70% 0.160 27)',
-        'accent-d':'oklch(54% 0.195 27)',
+        // ONE accent — Dynamic Blue. Saturated mid-lightness cyan-blue.
+        // Universal "data / metric / chart" semantic. Distinct from the
+        // AI-default cobalt because it leans toward cyan, not violet.
+        accent:    'oklch(62% 0.150 230)',  // ~Dynamic Blue #0192C6
+        'accent-2':'oklch(72% 0.120 230)',
+        'accent-d':'oklch(52% 0.165 235)',  // pressed / strong
 
-        // Semantic — used only for state, not decoration.
-        // pos: a calm green (not the bright lichen) so it sits well against off-white
-        // neg: deep crimson, kept distinct from the accent in hue
-        pos: 'oklch(50% 0.140 152)',
-        neg: 'oklch(52% 0.205 18)',
+        // Semantic — only for state.
+        //   pos = Fun Green from board #7 — natural "good result"
+        //   neg = deep crimson — kept distinct from accent hue
+        pos: 'oklch(48% 0.130 152)',        // ~Fun Green #15633D
+        neg: 'oklch(52% 0.205 18)',         // deep crimson
 
         // Legacy aliases.
-        ink:       'oklch(97% 0.004 285)',
-        'ink-2':   'oklch(94% 0.006 285)',
-        panel:     'oklch(94% 0.006 285)',
-        'panel-2': 'oklch(90% 0.010 285)',
-        border:    'oklch(86% 0.012 285)',
-        'border-2':'oklch(78% 0.015 285)',
-        muted:     'oklch(54% 0.030 285)',
-        body:      'oklch(38% 0.045 285)',
-        fg:        'oklch(15% 0.060 285)',
+        ink:       'oklch(98% 0.005 245)',
+        'ink-2':   'oklch(95% 0.010 245)',
+        panel:     'oklch(95% 0.010 245)',
+        'panel-2': 'oklch(91% 0.015 245)',
+        border:    'oklch(86% 0.020 245)',
+        'border-2':'oklch(76% 0.025 245)',
+        muted:     'oklch(52% 0.045 245)',
+        body:      'oklch(36% 0.060 245)',
+        fg:        'oklch(15% 0.090 245)',
         warm:      'oklch(52% 0.205 18)',
-        cool:      'oklch(50% 0.140 240)',
-        success:   'oklch(50% 0.140 152)',
+        cool:      'oklch(62% 0.150 230)',
+        success:   'oklch(48% 0.130 152)',
       },
       fontFamily: {
-        // Clash Grotesk via Fontshare (free, OFL-equivalent license).
-        // Distinctive geometric grotesk — breaks the AI-default Inter reflex.
-        sans: ['"Clash Grotesk"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        // Work Sans (Google Fonts, OFL) — body default. Humanist sans, very
+        // legible at small sizes, more character than Inter.
+        sans: ['"Work Sans"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        // Clash Grotesk (Fontshare, ITF FFL) — display only. h1, h2, CTAs,
+        // the wordmark, mono-uppercase eyebrow labels.
+        display: ['"Clash Grotesk"', '"Work Sans"', '-apple-system', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       letterSpacing: {
