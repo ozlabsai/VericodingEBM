@@ -144,40 +144,42 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-ink/80 backdrop-blur-md border-b border-border px-4 py-2.5 flex items-center gap-5">
-        <a href="/" className="flex items-baseline gap-2 group">
-          <span className="font-serif italic text-base text-fg leading-none">VericodingEBM</span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">manifold</span>
+    <div className="h-[100dvh] flex flex-col bg-bg0">
+      {/* Header — matches landing Nav */}
+      <header className="hairline-b backdrop-blur-md bg-bg0/75 px-6 h-12 flex items-center gap-6 shrink-0">
+        <a href="/" className="flex items-baseline gap-2">
+          <span className="text-text0 text-sm font-medium tracking-crisp">Where to Look</span>
+          <span className="font-mono text-[10px] tabular text-text3">manifold</span>
         </a>
-        <nav className="flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.16em]">
-          <a href="/manifold"    className="px-2 py-1 rounded text-accent">manifold</a>
-          <a href="/landscape"   className="px-2 py-1 rounded text-muted hover:text-fg transition-colors">2d</a>
-          <a href="/landscape3d" className="px-2 py-1 rounded text-muted hover:text-fg transition-colors">3d</a>
+        <nav className="flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.14em]">
+          <a href="/manifold"    className="press px-2.5 py-1 rounded text-text0">manifold</a>
+          <a href="/landscape"   className="press px-2.5 py-1 rounded text-text3 hover:text-text1">2d</a>
+          <a href="/landscape3d" className="press px-2.5 py-1 rounded text-text3 hover:text-text1">3d</a>
+          <span className="px-2 text-line2">·</span>
+          <a href="/" className="press px-2.5 py-1 rounded text-text3 hover:text-text1">home</a>
         </nav>
-        <div className="font-mono text-[11px] text-body/80 tabular-display">
-          {impls.length.toLocaleString()} <span className="text-muted">impls</span>
-          <span className="text-border mx-1.5">·</span>
-          {allLines.length.toLocaleString()} <span className="text-muted">lines</span>
-          <span className="text-border mx-1.5">·</span>
-          <span className="text-warm">{impls.filter(i => i.status === 'fail').length}</span> <span className="text-muted">fail</span>
+        <div className="font-mono text-[11px] text-text2 tabular ml-2">
+          {impls.length.toLocaleString()} <span className="text-text3">impls</span>
+          <span className="text-line2 mx-1.5">·</span>
+          {allLines.length.toLocaleString()} <span className="text-text3">lines</span>
+          <span className="text-line2 mx-1.5">·</span>
+          <span className="text-neg">{impls.filter(i => i.status === 'fail').length}</span> <span className="text-text3">fail</span>
         </div>
-        <div className="ml-auto text-xs text-muted">
-          {hoverInfo ?? 'click an impl on the left to drill in · use the corruption lab on the right'}
+        <div className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-text3 truncate">
+          {hoverInfo ?? 'click a point to drill in · corruption lab on the right'}
         </div>
       </header>
 
-      {/* Main grid: 2 manifold panels + side editor */}
-      <main className="flex-1 grid grid-cols-[1fr_1fr_360px] gap-2 p-2 overflow-hidden">
-        {/* Impl manifold */}
-        <div className="flex flex-col bg-panel border border-border rounded overflow-hidden">
-          <div className="px-3 py-2 text-xs border-b border-border flex items-center gap-2">
-            <span className="font-semibold">Impl manifold</span>
-            <span className="text-zinc-500">color = whole-impl energy</span>
-            <span className="ml-auto text-zinc-500">click → drill</span>
+      {/* Main — hairline-divided regions, not boxed cards */}
+      <main className="flex-1 grid grid-cols-[1fr_1fr_380px] divide-x divide-line1 overflow-hidden">
+        {/* Impl manifold region */}
+        <section className="flex flex-col overflow-hidden">
+          <div className="hairline-b px-4 py-3 flex items-baseline gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text1">impl manifold</span>
+            <span className="font-mono text-[10px] text-text3">color · whole-impl energy</span>
+            <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-text3">click → drill</span>
           </div>
-          <div ref={implPanelRef} className="flex-1 relative">
+          <div ref={implPanelRef} className="flex-1 relative bg-bg0">
             {impls.length > 0 && (
               <ManifoldScatter
                 points={implPoints}
@@ -189,20 +191,20 @@ export default function App() {
               />
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Line manifold */}
-        <div className="flex flex-col bg-panel border border-border rounded overflow-hidden">
-          <div className="px-3 py-2 text-xs border-b border-border flex items-center gap-2">
-            <span className="font-semibold">Line manifold</span>
-            <span className="text-zinc-500">color = per-line energy</span>
+        {/* Line manifold region */}
+        <section className="flex flex-col overflow-hidden">
+          <div className="hairline-b px-4 py-3 flex items-baseline gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text1">line manifold</span>
+            <span className="font-mono text-[10px] text-text3">color · per-line energy</span>
             {selectedImpl && (
-              <span className="ml-auto text-accent">
-                showing {selectedImpl.impl.impl_id} ({selectedImpl.lines.length} lines)
+              <span className="ml-auto font-mono text-[10px] text-accent truncate max-w-[60%]">
+                {selectedImpl.impl.impl_id} · {selectedImpl.lines.length}L
               </span>
             )}
           </div>
-          <div ref={linePanelRef} className="flex-1 relative">
+          <div ref={linePanelRef} className="flex-1 relative bg-bg0">
             {allLines.length > 0 && (
               <ManifoldScatter
                 points={linePoints}
@@ -212,47 +214,57 @@ export default function App() {
               />
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Right rail: corruption-lab + examples + (live-only) editor */}
-        <aside className="flex flex-col gap-2 overflow-hidden">
-          <CorruptionLab onProject={handleCorruptionProject} />
-          <ExamplesPicker
-            onPick={loadImpl}
-            selectedId={selectedImpl?.impl.impl_id ?? null}
-          />
-          {!IS_STATIC_MODE && (
-            <LineEditor
-              initialSpec={SAMPLE_SPEC}
-              initialImpl={SAMPLE_IMPL}
-              onScored={handleScored}
-            />
-          )}
-          {selectedImpl && (
-            <div className="bg-panel border border-border rounded p-3 overflow-y-auto flex-1">
-              <div className="text-xs text-zinc-400 uppercase tracking-wider mb-1">
-                {selectedImpl.impl.impl_id}
-              </div>
-              <div className="text-xs text-zinc-500 mb-2">
-                spec={selectedImpl.impl.spec_id} · status={selectedImpl.impl.status} · whole-impl energy={selectedImpl.impl.whole_impl_energy.toFixed(3)}
-              </div>
-              <div className="text-xs text-zinc-400 uppercase tracking-wider mb-1">Lines (by energy desc)</div>
-              <div className="flex flex-col gap-1 text-xs font-mono">
-                {selectedImpl.lines
-                  .slice()
-                  .sort((a, b) => b.energy - a.energy)
-                  .slice(0, 30)
-                  .map(l => (
-                    <div key={l.line_idx} className="flex gap-2 items-baseline">
-                      <span className="text-zinc-500 w-10 shrink-0 text-right">{l.energy.toFixed(2)}</span>
-                      <span className={l.is_buggy ? 'text-warm' : 'text-zinc-300'}>
-                        {l.is_buggy ? '✱ ' : '  '}{l.line_text.slice(0, 80)}
-                      </span>
-                    </div>
-                  ))}
-              </div>
+        {/* Right rail */}
+        <aside className="flex flex-col overflow-hidden bg-bg1">
+          <div className="flex-1 overflow-y-auto no-scrollbar">
+            <CorruptionLab onProject={handleCorruptionProject} />
+            <div className="hairline-t">
+              <ExamplesPicker
+                onPick={loadImpl}
+                selectedId={selectedImpl?.impl.impl_id ?? null}
+              />
             </div>
-          )}
+            {!IS_STATIC_MODE && (
+              <div className="hairline-t">
+                <LineEditor
+                  initialSpec={SAMPLE_SPEC}
+                  initialImpl={SAMPLE_IMPL}
+                  onScored={handleScored}
+                />
+              </div>
+            )}
+            {selectedImpl && (
+              <div className="hairline-t px-4 py-4">
+                <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3 mb-1.5 truncate">
+                  {selectedImpl.impl.impl_id}
+                </div>
+                <div className="font-mono text-[10px] text-text3 mb-3 flex items-baseline gap-2 flex-wrap">
+                  <span>spec={selectedImpl.impl.spec_id.slice(0, 24)}…</span>
+                  <span className="text-line2">·</span>
+                  <span className={selectedImpl.impl.status === 'fail' ? 'text-neg' : 'text-pos'}>{selectedImpl.impl.status}</span>
+                  <span className="text-line2">·</span>
+                  <span className="tabular text-text1">E={selectedImpl.impl.whole_impl_energy.toFixed(3)}</span>
+                </div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3 mb-1.5">lines, energy desc</div>
+                <div className="flex flex-col gap-1 font-mono text-[11px]">
+                  {selectedImpl.lines
+                    .slice()
+                    .sort((a, b) => b.energy - a.energy)
+                    .slice(0, 30)
+                    .map(l => (
+                      <div key={l.line_idx} className="grid grid-cols-[44px_1fr] gap-2 items-baseline">
+                        <span className="tabular text-text3 text-right">{l.energy.toFixed(2)}</span>
+                        <span className={`truncate ${l.is_buggy ? 'text-neg' : 'text-text2'}`}>
+                          {l.is_buggy ? '◆ ' : '  '}{l.line_text.slice(0, 80)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
         </aside>
       </main>
     </div>

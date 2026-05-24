@@ -25,28 +25,25 @@ export default function LineEditor({ initialSpec, initialImpl, onScored }: Props
     }
   }
 
+  const taClass = "bg-bg0 border border-line2 rounded p-2 text-[11px] font-mono text-text1 resize-y focus:outline-none focus:border-text3"
   return (
-    <div className="flex flex-col gap-2 p-3 bg-panel border border-border rounded">
-      <div className="text-xs text-zinc-400 uppercase tracking-wider">Spec</div>
-      <textarea
-        value={spec} onChange={e => setSpec(e.target.value)}
-        rows={4}
-        className="bg-ink border border-border rounded p-2 text-xs font-mono text-zinc-200 resize-y"
-      />
-      <div className="text-xs text-zinc-400 uppercase tracking-wider">Implementation</div>
-      <textarea
-        value={impl} onChange={e => setImpl(e.target.value)}
-        rows={8}
-        className="bg-ink border border-border rounded p-2 text-xs font-mono text-zinc-200 resize-y"
-      />
+    <div className="flex flex-col gap-2.5 px-4 py-4">
+      <div className="flex items-baseline gap-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text1">live editor</span>
+        <span className="font-mono text-[10px] text-text3">dynamic mode</span>
+      </div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3">spec</div>
+      <textarea value={spec} onChange={e => setSpec(e.target.value)} rows={4} className={taClass} />
+      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3">impl</div>
+      <textarea value={impl} onChange={e => setImpl(e.target.value)} rows={8} className={taClass} />
       <div className="flex items-center justify-between gap-2">
         <button
           onClick={handleScore} disabled={loading || !impl.trim()}
-          className="px-3 py-1 rounded bg-accent hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          className="press px-3 py-2 rounded bg-text0 text-bg0 hover:bg-text1 disabled:opacity-40 disabled:cursor-not-allowed font-mono text-[11px] uppercase tracking-[0.12em]"
         >
-          {loading ? 'scoring...' : 'score & project'}
+          {loading ? 'scoring…' : 'score & project'}
         </button>
-        {err && <span className="text-warm text-xs">{err}</span>}
+        {err && <span className="text-neg font-mono text-[11px]">{err}</span>}
       </div>
     </div>
   )

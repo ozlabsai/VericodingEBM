@@ -13,10 +13,10 @@ type Props = {
   selectedId?: string | null
 }
 
-const CATEGORY_STYLE: Record<Example['category'], { label: string; tone: string }> = {
-  model_win:       { label: 'Model wins',  tone: 'text-emerald-400' },
-  model_miss:      { label: 'Model misses', tone: 'text-rose-400'    },
-  pass_low_energy: { label: 'Clean PASS',  tone: 'text-sky-400'     },
+const CATEGORY_STYLE: Record<Example['category'], { label: string; tone: string; dot: string }> = {
+  model_win:       { label: 'win',  tone: 'text-pos',  dot: 'bg-pos'   },
+  model_miss:      { label: 'miss', tone: 'text-neg',  dot: 'bg-neg'   },
+  pass_low_energy: { label: 'pass', tone: 'text-text1', dot: 'bg-text2' },
 }
 
 export default function ExamplesPicker({ onPick, selectedId }: Props) {
@@ -34,33 +34,31 @@ export default function ExamplesPicker({ onPick, selectedId }: Props) {
 
   const filtered = filter === 'all' ? examples : examples.filter(e => e.category === filter)
 
-  if (err) return <div className="text-xs text-rose-400 p-2">examples load error: {err}</div>
+  if (err) return <div className="px-4 py-3 font-mono text-[11px] text-neg">examples load error: {err}</div>
   if (examples.length === 0) return null
 
   return (
-    <div className="bg-panel border border-border rounded p-2 flex flex-col gap-2 max-h-[40vh] overflow-hidden">
+    <div className="px-4 py-4 flex flex-col gap-3 max-h-[50vh] overflow-hidden">
       <div className="flex items-baseline gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
-          Curated examples
-        </span>
-        <span className="text-xs text-zinc-500">click to drill in</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text1">curated examples</span>
+        <span className="font-mono text-[10px] text-text3">click to drill in</span>
       </div>
-      <div className="flex gap-1 text-xs">
+      <div className="flex gap-1 font-mono text-[10px] uppercase tracking-[0.12em]">
         {(['all', 'model_win', 'model_miss', 'pass_low_energy'] as const).map(k => (
           <button
             key={k}
             onClick={() => setFilter(k)}
-            className={`px-2 py-0.5 rounded border ${
+            className={`press px-2 py-1 rounded border ${
               filter === k
-                ? 'bg-accent/20 border-accent text-accent'
-                : 'border-border text-zinc-400 hover:text-zinc-200'
+                ? 'border-text1 text-text0 bg-bg2'
+                : 'border-line2 text-text3 hover:text-text2 hover:border-text3'
             }`}
           >
             {k === 'all' ? 'all' : CATEGORY_STYLE[k].label}
           </button>
         ))}
       </div>
-      <div className="overflow-y-auto flex flex-col gap-1.5">
+      <div className="overflow-y-auto no-scrollbar divide-y divide-line1 border-y border-line1">
         {filtered.map(ex => {
           const isSelected = selectedId === ex.impl_id
           const style = CATEGORY_STYLE[ex.category]
@@ -68,23 +66,20 @@ export default function ExamplesPicker({ onPick, selectedId }: Props) {
             <button
               key={ex.impl_id}
               onClick={() => onPick(ex.impl_id)}
-              className={`text-left p-2 rounded border ${
-                isSelected
-                  ? 'bg-accent/10 border-accent'
-                  : 'border-border hover:border-zinc-600 bg-ink'
+              className={`press text-left py-2.5 px-1 w-full block transition-colors ${
+                isSelected ? 'bg-bg2' : 'hover:bg-bg2/50'
               }`}
             >
-              <div className="flex items-baseline gap-2 mb-0.5">
-                <span className={`text-xs font-medium ${style.tone}`}>{style.label}</span>
-                <span className="text-xs text-zinc-500">
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className={`inline-block w-1.5 h-1.5 rounded-full ${style.dot} translate-y-[2px]`} />
+                <span className={`font-mono text-[10px] uppercase tracking-[0.14em] ${style.tone}`}>{style.label}</span>
+                <span className="font-mono text-[10px] tabular text-text3">
                   {ex.stats.n_lines}L
                   {ex.stats.n_buggy ? ` · ${ex.stats.n_buggy} bug${ex.stats.n_buggy > 1 ? 's' : ''}` : ''}
                 </span>
               </div>
-              <div className="text-xs text-zinc-300 leading-snug">{ex.blurb}</div>
-              <div className="text-[10px] text-zinc-600 font-mono mt-0.5 truncate">
-                {ex.impl_id}
-              </div>
+              <div className="text-[12px] text-text2 leading-snug">{ex.blurb}</div>
+              <div className="text-[10px] text-text3 font-mono mt-1 truncate">{ex.impl_id}</div>
             </button>
           )
         })}

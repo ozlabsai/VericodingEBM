@@ -37,17 +37,12 @@ type Props = {
   onProject?: (xy: [number, number], energy: number, label: string) => void
 }
 
-function VariantBadge({ kind }: { kind: CorruptionVariant['kind'] }) {
-  const cfg = {
-    fail_original:       { txt: 'FAIL',     cls: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
-    fail_marker_stripped:{ txt: 'FAIL (markers stripped)', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
-    pass_sibling:        { txt: 'PASS',     cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
-  }[kind]
-  return (
-    <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded border ${cfg.cls}`}>
-      {cfg.txt}
-    </span>
-  )
+function variantMeta(kind: CorruptionVariant['kind']) {
+  switch (kind) {
+    case 'fail_original':         return { txt: 'FAIL',          dot: 'bg-neg',  text: 'text-neg'   }
+    case 'fail_marker_stripped':  return { txt: 'FAIL stripped', dot: 'bg-text2', text: 'text-text1' }
+    case 'pass_sibling':          return { txt: 'PASS',          dot: 'bg-pos',  text: 'text-pos'   }
+  }
 }
 
 function PerLineBars({ energies, impl }: { energies: number[]; impl: string }) {
@@ -70,29 +65,29 @@ function PerLineBars({ energies, impl }: { energies: number[]; impl: string }) {
   const topLineIdx = scorableIndices[energies.indexOf(eMax)]
 
   return (
-    <div className="text-xs font-mono">
+    <div className="font-mono text-[11px] leading-[1.55]">
       {lines.map((line, i) => {
         const e = lineToEnergy.get(i)
         const hasBar = e !== undefined
         const t = hasBar ? (e - eMin) / range : 0
         const isTop = i === topLineIdx
         return (
-          <div key={i} className="flex gap-1 items-stretch leading-tight">
-            <span className="w-7 text-right text-zinc-600 shrink-0">{i + 1}</span>
-            <div className="w-14 shrink-0 relative bg-ink/40 rounded overflow-hidden">
+          <div key={i} className="grid grid-cols-[20px_56px_1fr] gap-1.5 items-baseline">
+            <span className="text-right text-text3/60 tabular text-[10px]">{i + 1}</span>
+            <div className="relative h-3 bg-bg2 rounded-sm overflow-hidden">
               {hasBar && (
                 <div
-                  className={`absolute inset-y-0 left-0 ${isTop ? 'bg-rose-500/70' : 'bg-sky-500/40'}`}
-                  style={{ width: `${Math.max(3, t * 100)}%` }}
+                  className={`absolute inset-y-0 left-0 ${isTop ? 'bg-accent' : 'bg-text3/40'}`}
+                  style={{ width: `${Math.max(3, t * 100)}%`, transition: 'width 400ms cubic-bezier(0.23, 1, 0.32, 1)' }}
                 />
               )}
               {hasBar && (
-                <span className="absolute inset-0 flex items-center justify-end pr-1 text-[9px] text-zinc-200 tabular-nums">
+                <span className="absolute inset-0 flex items-center justify-end pr-1 text-[9px] text-text1 tabular">
                   {e!.toFixed(2)}
                 </span>
               )}
             </div>
-            <span className={`flex-1 whitespace-pre ${isTop ? 'text-rose-200' : 'text-zinc-300'}`}>
+            <span className={`whitespace-pre truncate ${isTop ? 'text-text0' : hasBar ? 'text-text2' : 'text-text3/60'}`}>
               {line || ' '}
             </span>
           </div>
@@ -134,76 +129,84 @@ export default function CorruptionLab({ onProject }: Props) {
     return orig?.whole_impl_energy
   }, [ex])
 
-  if (err) return <div className="text-xs text-rose-400 p-2">corruption examples load error: {err}</div>
+  if (err) return <div className="px-4 py-3 font-mono text-[11px] text-neg">corruption load error: {err}</div>
   if (!ex || !v) return null
+  const vMeta = variantMeta(v.kind)
 
   return (
-    <div className="bg-panel border border-border rounded p-2 flex flex-col gap-2 overflow-hidden">
+    <div className="px-4 py-4 flex flex-col gap-3">
+      {/* Heading row */}
       <div className="flex items-baseline gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
-          Corruption lab
-        </span>
-        <span className="text-xs text-zinc-500">precomputed — no backend needed</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text1">corruption lab</span>
+        <span className="font-mono text-[10px] text-text3">precomputed</span>
       </div>
 
       {/* Example picker */}
       <select
         value={selIdx}
         onChange={(e) => { setSelIdx(Number(e.target.value)); setVariantIdx(0) }}
-        className="bg-ink border border-border rounded px-2 py-1 text-xs"
+        className="press bg-bg0 border border-line2 hover:border-text3 rounded px-2 py-1.5 text-[12px] text-text1"
       >
         {examples.map((e, i) => (
           <option key={e.name} value={i}>{e.label}</option>
         ))}
       </select>
 
-      <div className="text-xs text-zinc-400 leading-snug">{ex.blurb}</div>
+      <p className="text-[12px] text-text2 leading-snug">{ex.blurb}</p>
 
       {/* Variant chips */}
       <div className="flex flex-wrap gap-1">
-        {ex.variants.map((vv, i) => (
-          <button
-            key={i}
-            onClick={() => setVariantIdx(i)}
-            className={`flex items-center gap-1 px-2 py-1 rounded border text-xs ${
-              variantIdx === i
-                ? 'bg-accent/20 border-accent text-accent'
-                : 'border-border text-zinc-400 hover:text-zinc-200'
-            }`}
-            title={vv.note}
-          >
-            <VariantBadge kind={vv.kind} />
-            {variantIdx === i && (
-              <span className="tabular-nums text-[10px] text-zinc-300">
-                E={vv.whole_impl_energy.toFixed(2)}
-              </span>
-            )}
-          </button>
-        ))}
+        {ex.variants.map((vv, i) => {
+          const m = variantMeta(vv.kind)
+          const active = variantIdx === i
+          return (
+            <button
+              key={i}
+              onClick={() => setVariantIdx(i)}
+              className={`press flex items-center gap-1.5 px-2 py-1 rounded border font-mono text-[10px] uppercase tracking-[0.12em] ${
+                active
+                  ? 'border-text1 text-text0 bg-bg2'
+                  : 'border-line2 text-text3 hover:text-text2 hover:border-text3'
+              }`}
+              title={vv.note}
+            >
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${m.dot}`} />
+              {m.txt}
+              {active && (
+                <span className="tabular text-text2 normal-case tracking-normal">
+                  E {vv.whole_impl_energy.toFixed(2)}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
-      <div className="text-xs text-zinc-500 leading-snug italic">{v.note}</div>
+      <p className="text-[12px] text-text3 leading-snug">{v.note}</p>
 
-      {/* Energy summary */}
-      <div className="bg-ink/40 border border-border rounded px-2 py-1 text-xs flex items-baseline gap-3">
-        <span className="text-zinc-500">whole-impl E</span>
-        <span className="text-zinc-100 font-mono tabular-nums">{v.whole_impl_energy.toFixed(3)}</span>
+      {/* Energy summary — flat, hairline-divided, no card */}
+      <div className="hairline-t hairline-b py-2 flex items-baseline gap-3 font-mono">
+        <span className="text-[10px] uppercase tracking-[0.14em] text-text3">whole-impl E</span>
+        <span className="tabular text-text0 text-lg">{v.whole_impl_energy.toFixed(3)}</span>
         {baseEnergy != null && v.kind !== 'fail_original' && (
-          <span className={`font-mono tabular-nums text-[10px] ${
-            v.whole_impl_energy < baseEnergy ? 'text-emerald-300' : 'text-rose-300'
+          <span className={`tabular text-[11px] ${
+            v.whole_impl_energy < baseEnergy ? 'text-pos' : 'text-neg'
           }`}>
             {v.whole_impl_energy < baseEnergy ? '↓' : '↑'}
-            {Math.abs(v.whole_impl_energy - baseEnergy).toFixed(3)} vs FAIL
+            {Math.abs(v.whole_impl_energy - baseEnergy).toFixed(2)}
           </span>
         )}
+        <span className={`ml-auto text-[10px] uppercase tracking-[0.14em] ${vMeta.text}`}>{vMeta.txt}</span>
       </div>
 
-      {/* Spec + per-line bars (scrollable) */}
-      <div className="overflow-y-auto bg-ink/40 rounded border border-border p-2 max-h-[40vh]">
-        <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">spec</div>
-        <pre className="text-xs font-mono text-zinc-400 whitespace-pre-wrap mb-2">{ex.spec.trim()}</pre>
-        <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">impl + per-line energies</div>
-        <PerLineBars energies={v.per_line_energies} impl={v.impl} />
+      {/* Spec + per-line bars */}
+      <div>
+        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3 mb-1.5">spec</div>
+        <pre className="text-[11px] font-mono text-text2 whitespace-pre-wrap mb-3 bg-bg0 rounded border border-line1 p-2 max-h-32 overflow-y-auto no-scrollbar">{ex.spec.trim()}</pre>
+        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3 mb-1.5">impl · per-line E</div>
+        <div className="bg-bg0 rounded border border-line1 p-2 max-h-[40vh] overflow-y-auto no-scrollbar">
+          <PerLineBars energies={v.per_line_energies} impl={v.impl} />
+        </div>
       </div>
     </div>
   )

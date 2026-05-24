@@ -69,71 +69,72 @@ export default function LandscapePage3D() {
     } catch (e) { console.error(e) }
   }
 
+  const selectClass = "press bg-bg1 border border-line2 rounded font-mono text-[11px] text-text1 px-1.5 py-0.5 hover:border-text3"
   return (
-    <div className="h-screen flex flex-col">
-      <header className="bg-ink/80 backdrop-blur-md border-b border-border px-4 py-2.5 flex items-center gap-5">
+    <div className="h-[100dvh] flex flex-col bg-bg0">
+      <header className="hairline-b backdrop-blur-md bg-bg0/75 px-6 h-12 flex items-center gap-6 shrink-0">
         <a href="/" className="flex items-baseline gap-2">
-          <span className="font-serif italic text-base text-fg leading-none">VericodingEBM</span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">landscape 3d</span>
+          <span className="text-text0 text-sm font-medium tracking-crisp">Where to Look</span>
+          <span className="font-mono text-[10px] tabular text-text3">landscape 3d</span>
         </a>
-        <nav className="flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.16em]">
-          <a href="/manifold"    className="px-2 py-1 rounded text-muted hover:text-fg transition-colors">manifold</a>
-          <a href="/landscape"   className="px-2 py-1 rounded text-muted hover:text-fg transition-colors">2d</a>
-          <a href="/landscape3d" className="px-2 py-1 rounded text-accent">3d</a>
+        <nav className="flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.14em]">
+          <a href="/manifold"    className="press px-2.5 py-1 rounded text-text3 hover:text-text1">manifold</a>
+          <a href="/landscape"   className="press px-2.5 py-1 rounded text-text3 hover:text-text1">2d</a>
+          <a href="/landscape3d" className="press px-2.5 py-1 rounded text-text0">3d</a>
+          <span className="px-2 text-line2">·</span>
+          <a href="/" className="press px-2.5 py-1 rounded text-text3 hover:text-text1">home</a>
         </nav>
-        <div className="ml-auto flex items-center gap-3 text-xs">
-          <label className="flex items-center gap-1">
-            scope:
-            <select value={scope} onChange={e => setScope(e.target.value as any)}
-                    className="bg-ink border border-border rounded px-1 py-0.5">
+        <div className="ml-auto flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.14em] text-text3 flex-wrap">
+          <label className="flex items-center gap-1.5">
+            <span>scope</span>
+            <select value={scope} onChange={e => setScope(e.target.value as any)} className={selectClass}>
               <option value="impl">whole-impl</option>
               <option value="line">per-line</option>
             </select>
           </label>
-          <label className="flex items-center gap-1">
-            grid:
-            <select value={grid} onChange={e => setGrid(parseInt(e.target.value))}
-                    className="bg-ink border border-border rounded px-1 py-0.5">
+          <label className="flex items-center gap-1.5">
+            <span>grid</span>
+            <select value={grid} onChange={e => setGrid(parseInt(e.target.value))} className={selectClass}>
               <option value="64">64</option>
               <option value="96">96</option>
               <option value="128">128</option>
               <option value="192">192</option>
             </select>
           </label>
-          <label className="flex items-center gap-1">
-            smooth:
+          <label className="flex items-center gap-1.5">
+            <span>smooth</span>
             <input type="range" min={0.5} max={15} step={0.25}
                    value={smoothness} onChange={e => setSmoothness(parseFloat(e.target.value))}
-                   className="w-24" />
-            <span className="text-zinc-500 w-8">{smoothness.toFixed(1)}</span>
+                   className="w-20 accent-accent" />
+            <span className="tabular text-text2 w-7">{smoothness.toFixed(1)}</span>
           </label>
-          <label className="flex items-center gap-1">
-            height:
+          <label className="flex items-center gap-1.5">
+            <span>height</span>
             <input type="range" min={0.1} max={2.0} step={0.05}
                    value={heightScale} onChange={e => setHeightScale(parseFloat(e.target.value))}
-                   className="w-24" />
-            <span className="text-zinc-500 w-8">{heightScale.toFixed(2)}</span>
+                   className="w-20 accent-accent" />
+            <span className="tabular text-text2 w-9">{heightScale.toFixed(2)}</span>
           </label>
-          <label className="flex items-center gap-1 cursor-pointer">
-            <input type="checkbox" checked={showPoints} onChange={e => setShowPoints(e.target.checked)} />
-            points
+          <label className="press flex items-center gap-1.5 cursor-pointer hover:text-text1">
+            <input type="checkbox" checked={showPoints} onChange={e => setShowPoints(e.target.checked)} className="accent-accent" />
+            <span>points</span>
           </label>
-          <label className="flex items-center gap-1 cursor-pointer">
-            <input type="checkbox" checked={showWireframe} onChange={e => setShowWireframe(e.target.checked)} />
-            wireframe
+          <label className="press flex items-center gap-1.5 cursor-pointer hover:text-text1">
+            <input type="checkbox" checked={showWireframe} onChange={e => setShowWireframe(e.target.checked)} className="accent-accent" />
+            <span>wire</span>
           </label>
-          {loading && <span className="text-zinc-500">loading…</span>}
+          {loading && <span className="text-accent">loading…</span>}
         </div>
       </header>
 
-      <main className="flex-1 grid grid-cols-[1fr_360px] gap-2 p-2 overflow-hidden">
-        <div className="flex flex-col bg-panel border border-border rounded overflow-hidden">
-          <div className="px-3 py-2 text-xs border-b border-border flex items-center gap-3">
-            <span className="font-semibold">3D energy landscape</span>
-            <span className="text-zinc-500">
-              {field && `${field.grid}×${field.grid} field · ${field.points.length} pts · bandwidth ${field.bandwidth.toFixed(3)}`}
+      <main className="flex-1 grid grid-cols-[1fr_380px] divide-x divide-line1 overflow-hidden">
+        <section className="flex flex-col overflow-hidden">
+          <div className="hairline-b px-4 py-3 flex items-baseline gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text1">3d energy landscape</span>
+            <span className="font-mono text-[10px] text-text3">
+              {field ? `${field.grid}×${field.grid} · ${field.points.length} pts · bw ${field.bandwidth.toFixed(2)}` : '—'}
             </span>
-            <span className="ml-auto text-zinc-500">drag to rotate · scroll to zoom · right-drag to pan</span>
+            <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-text3">drag · scroll · right-drag</span>
           </div>
           <div className="flex-1 relative">
             {field && (
@@ -151,65 +152,68 @@ export default function LandscapePage3D() {
               />
             )}
             {field && (
-              <div className="absolute bottom-2 left-2 bg-ink/80 border border-border rounded px-2 py-1 text-[10px] flex items-center gap-2">
-                <span className="text-zinc-500">low E</span>
-                <div className="h-2 w-32 rounded" style={{
+              <div className="absolute bottom-3 left-3 bg-bg0/85 backdrop-blur border border-line1 rounded px-2.5 py-1.5 flex items-center gap-2 font-mono text-[10px] text-text3">
+                <span>low</span>
+                <div className="h-1.5 w-32 rounded-sm" style={{
                   background: 'linear-gradient(to right, #053061, #2166ac, #4393c3, #92c5de, #f7f7f7, #f4a582, #d6604d, #b2182b, #67001f)',
                 }} />
-                <span className="text-zinc-500">high E</span>
-                <span className="ml-2 text-zinc-600">{field.energy_min.toFixed(1)} … {field.energy_max.toFixed(1)}</span>
+                <span>high</span>
+                <span className="text-text2 tabular ml-1">{field.energy_min.toFixed(1)} … {field.energy_max.toFixed(1)}</span>
               </div>
             )}
             {trajectory && (
-              <div className="absolute top-2 right-2 bg-ink/80 border border-border rounded px-2 py-1 text-[10px]">
-                step {trajStep}/{trajectory.length}
-                <button
-                  onClick={() => { setTrajectory(null); setTrajStep(0); setUserBall(null) }}
-                  className="ml-2 text-zinc-400 hover:text-zinc-200"
-                >clear</button>
+              <div className="absolute top-3 right-3 bg-bg0/85 backdrop-blur border border-line1 rounded px-2.5 py-1.5 font-mono text-[10px] text-text2 flex items-center gap-2">
+                <span className="tabular">step {trajStep}/{trajectory.length}</span>
+                <button onClick={() => { setTrajectory(null); setTrajStep(0); setUserBall(null) }}
+                        className="press text-text3 hover:text-accent uppercase tracking-[0.12em]">clear</button>
               </div>
             )}
           </div>
-        </div>
+        </section>
 
-        <aside className="flex flex-col gap-2 overflow-hidden">
-          <div className="bg-panel border border-border rounded p-3 text-xs">
-            <div className="text-zinc-300 font-semibold mb-1">3D energy terrain</div>
-            <div className="text-zinc-500 leading-relaxed">
-              Height = predicted energy. <span className="text-zinc-300">Valleys</span> are where the model is
-              confident the impl is safe; <span className="text-zinc-300">peaks</span> are suspicious regions.
-              Paste your code below to drop a ball; the trajectory follows
-              −∇E exactly. Use the slider to exaggerate the Z axis when peaks
-              are subtle.
+        <aside className="flex flex-col overflow-hidden bg-bg1">
+          <div className="flex-1 overflow-y-auto no-scrollbar">
+            <div className="px-4 py-4">
+              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3 mb-2">how to read</div>
+              <p className="text-text2 text-[13px] leading-relaxed">
+                Height = predicted energy. Valleys are confident-safe; peaks are suspicious. The
+                height slider exaggerates the z-axis when peaks are subtle. The trajectory ball
+                follows −∇E exactly.
+              </p>
             </div>
-          </div>
-          <CorruptionLab
-            onProject={(xy, energy, label) => {
-              setUserBall({ x: xy[0], y: xy[1], energy })
-              setTrajectory(null); setTrajStep(0)
-              setScoreInfo(`${label} · E=${energy.toFixed(3)}`)
-            }}
-          />
-          {!IS_STATIC_MODE && (
-            <LineEditor
-              initialSpec={SAMPLE_SPEC}
-              initialImpl={SAMPLE_IMPL}
-              onScored={handleScored}
-            />
-          )}
-          {scoreInfo && (
-            <div className="bg-panel border border-border rounded p-2 text-xs text-zinc-400">{scoreInfo}</div>
-          )}
-          {trajectory && (
-            <div className="bg-panel border border-border rounded p-2 text-xs">
-              <div className="text-zinc-400 mb-1">Trajectory</div>
-              <div className="font-mono text-[10px] text-zinc-500">
-                start E = {trajectory[0].energy.toFixed(3)}<br/>
-                end   E = {trajectory[trajectory.length - 1].energy.toFixed(3)}<br/>
-                Δ = <span className="text-accent">{(trajectory[0].energy - trajectory[trajectory.length - 1].energy).toFixed(3)}</span>
+            <div className="hairline-t">
+              <CorruptionLab
+                onProject={(xy, energy, label) => {
+                  setUserBall({ x: xy[0], y: xy[1], energy })
+                  setTrajectory(null); setTrajStep(0)
+                  setScoreInfo(`${label} · E=${energy.toFixed(3)}`)
+                }}
+              />
+            </div>
+            {!IS_STATIC_MODE && (
+              <div className="hairline-t">
+                <LineEditor
+                  initialSpec={SAMPLE_SPEC}
+                  initialImpl={SAMPLE_IMPL}
+                  onScored={handleScored}
+                />
               </div>
-            </div>
-          )}
+            )}
+            {scoreInfo && (
+              <div className="hairline-t px-4 py-3 font-mono text-[11px] text-text2">{scoreInfo}</div>
+            )}
+            {trajectory && (
+              <div className="hairline-t px-4 py-3">
+                <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3 mb-1.5">trajectory</div>
+                <div className="grid grid-cols-[80px_1fr] gap-2 font-mono text-[11px] text-text2">
+                  <span className="text-text3">start E</span><span className="tabular">{trajectory[0].energy.toFixed(3)}</span>
+                  <span className="text-text3">end E</span>  <span className="tabular">{trajectory[trajectory.length - 1].energy.toFixed(3)}</span>
+                  <span className="text-text3">Δ</span>
+                  <span className="tabular text-accent">{(trajectory[0].energy - trajectory[trajectory.length - 1].energy).toFixed(3)}</span>
+                </div>
+              </div>
+            )}
+          </div>
         </aside>
       </main>
     </div>
