@@ -144,7 +144,7 @@ export default function TrainingArcFigure() {
                     className="tabular">#{r.id}</text>
               {/* codename below */}
               <text x={xAt(i)} y={H - PAD.bottom + 32} textAnchor="middle"
-                    fontFamily="Sentient" fontSize="10" fontWeight="500"
+                    fontFamily="Work Sans" fontSize="10" fontWeight="500"
                     fill={active ? 'oklch(24% 0.040 200)' : 'oklch(36% 0.045 200)'}>
                 {r.codename}
               </text>

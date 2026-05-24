@@ -34,16 +34,16 @@ function Hero() {
     <section className="border-b border-line1">
       <div className="max-w-[1400px] mx-auto px-6 pt-24 pb-16 grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-20 items-start">
         <div ref={lref} className="reveal">
-          <h1 className="font-display text-text0 leading-[1.0] tracking-editorial mb-8"
+          <h1 className="text-text0 leading-[1.0] tracking-tight mb-8"
               style={{ fontSize: 'clamp(2.8rem, 6vw, 5.2rem)' }}>
-            Where to <em className="italic font-display text-accent-d">look</em><br/>
+            Where to <span>look</span><br/>
             when verification<br/>
             fails.
           </h1>
           <p className="text-text2 text-[17px] leading-[1.6] max-w-xl">
             A discriminative energy-based model that scores each line of a Verus
             implementation with an energy proxy for{' '}
-            <em className="font-display italic text-text1">this line is the bug.</em>
+            <span className="text-text0">this line is the bug.</span>
             {' '}Qwen2.5-Coder-1.5B with LoRA, trained on the Microsoft Verus Training
             Data, evaluated against six static baselines, five frontier LLMs, and
             in closed-loop CEGIS with the Verus toolchain in the loop.
@@ -82,7 +82,7 @@ function BigNumberPlate() {
       <div className="max-w-[1400px] mx-auto px-6 py-20 grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 items-end">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-text3 mb-3">on Verus dev-test (n=609 FAILs)</div>
-          <div className="font-display text-text0 leading-none mb-4"
+          <div className="text-text0 leading-none mb-4"
                style={{ fontSize: 'clamp(5rem, 13vw, 12rem)', letterSpacing: '-0.05em' }}>
             0.84
           </div>
@@ -98,7 +98,7 @@ function BigNumberPlate() {
             { v: '−52pp',l: 'Δ marker-stripped',sub: 'LLMs ~ 0pp' },
           ].map((m,i) => (
             <div key={i} className="flex flex-col">
-              <span className="tabular text-text0 text-3xl font-display leading-none">{m.v}</span>
+              <span className="tabular text-text0 text-3xl leading-none">{m.v}</span>
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text3 mt-1.5">{m.l}</span>
               <span className="font-mono text-[10px] tabular text-text3/80 mt-0.5">{m.sub}</span>
             </div>
@@ -115,7 +115,7 @@ function Abstract() {
   return (
     <section ref={ref} className="reveal border-b border-line1">
       <div className="max-w-3xl mx-auto px-6 py-24 text-center">
-        <p className="font-display text-text1 text-2xl md:text-3xl leading-[1.45] tracking-crisp">
+        <p className="text-text1 text-2xl md:text-3xl leading-[1.45] tracking-tight">
           We treat per-line fault localization as a discriminative
           energy-based modeling problem: assign an unnormalized scalar
           energy to each line of an implementation, conditioned on its
@@ -137,10 +137,10 @@ function AuditSection() {
     <section ref={ref} className="reveal border-b border-line1">
       <div className="max-w-[1400px] mx-auto px-6 py-20">
         <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-12 mb-12 items-end">
-          <h2 className="font-display text-text0 leading-[1.05] tracking-editorial"
+          <h2 className="text-text0 leading-[1.05] tracking-tight"
               style={{ fontSize: 'clamp(2.4rem, 4.5vw, 4rem)' }}>
             Strip the marker.<br/>
-            <em className="italic text-accent-d">Watch the energy crash.</em>
+            <span>Watch the energy crash.</span>
           </h2>
           <p className="text-text2 text-[16px] leading-[1.6] max-w-xl">
             Every FAIL impl in the dev-test corpus carries a{' '}
@@ -165,10 +165,10 @@ function TrainingArcSection() {
   return (
     <section ref={ref} className="reveal border-b border-line1 bg-bg1">
       <div className="max-w-[1400px] mx-auto px-6 py-20">
-        <h2 className="font-display text-text0 leading-[1.05] tracking-editorial mb-3"
+        <h2 className="text-text0 leading-[1.05] tracking-tight mb-3"
             style={{ fontSize: 'clamp(2.4rem, 4.5vw, 4rem)' }}>
           Five runs.<br/>
-          <em className="italic">One that survived audit.</em>
+          <span>One that survived audit.</span>
         </h2>
         <p className="text-text2 text-[16px] leading-[1.6] max-w-2xl mb-12">
           Run 07 looked great until we audited it. Run 08 over-corrected. Run 09 was
@@ -213,7 +213,7 @@ function ArtifactsSection() {
   return (
     <section ref={ref} className="reveal border-b border-line1">
       <div className="max-w-[1400px] mx-auto px-6 py-20">
-        <h2 className="font-display text-text0 leading-[1.05] tracking-editorial mb-3"
+        <h2 className="text-text0 leading-[1.05] tracking-tight mb-3"
             style={{ fontSize: 'clamp(2.4rem, 4.5vw, 4rem)' }}>
           Four artifacts.
         </h2>
@@ -225,10 +225,10 @@ function ArtifactsSection() {
           {items.map((it, i) => (
             <li key={it.n} className={`grid grid-cols-12 gap-6 items-baseline py-7 ${i > 0 ? 'border-t border-line1' : ''}`}>
               <span className="col-span-1 font-mono text-[10px] tabular text-text3">{it.n}</span>
-              <h3 className="col-span-12 sm:col-span-3 font-display text-text0 text-2xl leading-tight tracking-crisp">{it.label}</h3>
+              <h3 className="col-span-12 sm:col-span-3 text-text0 text-2xl leading-tight tracking-tight">{it.label}</h3>
               <p className="col-span-12 sm:col-span-6 text-text2 text-[14px] leading-relaxed">{it.body}</p>
               <a href={it.href} target="_blank" rel="noreferrer"
-                 className="press col-span-12 sm:col-span-2 text-right font-mono text-[11px] text-text2 hover:text-accent-d tracking-crisp">
+                 className="press col-span-12 sm:col-span-2 text-right font-mono text-[11px] text-text2 hover:text-text0 tracking-tight">
                 {it.linkLabel} →
               </a>
             </li>
@@ -255,7 +255,7 @@ function MethodBlock() {
   return (
     <section ref={ref} className="reveal border-b border-line1 bg-bg1">
       <div className="max-w-3xl mx-auto px-6 py-20">
-        <h2 className="font-display text-text0 leading-[1.05] tracking-editorial mb-8"
+        <h2 className="text-text0 leading-[1.05] tracking-tight mb-8"
             style={{ fontSize: 'clamp(2.4rem, 4.5vw, 4rem)' }}>
           Method.
         </h2>
@@ -278,7 +278,7 @@ function Closing() {
   return (
     <section ref={ref} className="reveal">
       <div className="max-w-[1400px] mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-end">
-        <p className="font-display text-text0 text-3xl md:text-5xl leading-[1.1] tracking-editorial max-w-2xl">
+        <p className="text-text0 text-3xl md:text-5xl leading-[1.1] tracking-tight max-w-2xl">
           The demo runs in your browser.<br/>
           <span className="text-text3 italic">No model load. No backend.</span>
         </p>

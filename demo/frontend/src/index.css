@@ -1,14 +1,9 @@
 /* Type stack:
- *   - Sentient (Fontshare, ITF FFL) — display: h1, h2, hero, wordmark.
- *     Editorial serif with confident character (akin to Tiempos/Recoleta).
- *   - General Sans (Fontshare, ITF FFL) — body. Humanist sans, very
- *     legible at small sizes, more character than Inter.
- *   - JetBrains Mono (Google Fonts, OFL) — tabular numbers, code, every
- *     value rendered in mono.
- * Serif + humanist sans + monospace = editorial-magazine grain, not
- * SaaS-template grain. */
-@import url('https://api.fontshare.com/v2/css?f[]=sentient@400,500,700&f[]=general-sans@400,500,600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+ *   - Work Sans (Google Fonts, OFL) — everything except mono numbers/code.
+ *     Single family across the entire site; weight + size carry hierarchy.
+ *   - JetBrains Mono — tabular numbers, code, mono labels.
+ * One sans family. No display serif. No editorial pose. */
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -21,14 +16,11 @@
 
 html, body, #root { height: 100%; margin: 0; padding: 0; }
 body {
-  /* Default to General Sans for legibility everywhere except surfaces
-   * that explicitly opt into Sentient (display) or JetBrains Mono. */
-  font-family: 'General Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-feature-settings: 'ss01', 'ss02';
+  font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: oklch(97% 0.006 200);
-  color: oklch(36% 0.045 200);
+  background: oklch(98% 0 0);   /* near-white, no hue */
+  color: oklch(38% 0 0);        /* neutral mid-gray */
 }
 
 .deck-tooltip {
@@ -62,9 +54,9 @@ body {
   transform: translateY(0);
 }
 
-/* Hard 1px hairlines that look like 0.5px on retina */
-.hairline-t { box-shadow: inset 0 1px 0 oklch(88% 0.020 200); }
-.hairline-b { box-shadow: inset 0 -1px 0 oklch(88% 0.020 200); }
+/* Hard 1px hairlines */
+.hairline-t { box-shadow: inset 0 1px 0 oklch(88% 0 0); }
+.hairline-b { box-shadow: inset 0 -1px 0 oklch(88% 0 0); }
 
 /* prefers-reduced-motion: drop position-based motion */
 @media (prefers-reduced-motion: reduce) {
