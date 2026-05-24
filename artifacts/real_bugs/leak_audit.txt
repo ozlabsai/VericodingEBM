@@ -1,0 +1,20 @@
+LEAK AUDIT — train vs verus-real-bug corpus
+==========================================
+  Real records: 1492
+  Train examples: 31505
+
+  SPEC-text overlap (whitespace-normalized hash):
+    0/1492  (0.0%)
+  IMPL-text overlap (whitespace-normalized hash):
+    0/1492  (0.0%)
+
+  PER-RECORD scorable-line overlap (line text exact match):
+    mean fraction overlap: 0.389
+    records with >= 50% line overlap: 448/1492  (30.0%)
+    records with >= 90% line overlap: 1/1492  (0.1%)
+
+  FAILS-line label leakage:
+    real FAIL records with buggy_lines: 610
+    total buggy-line label sites: 965
+    sites where buggy line exact-matches a train-line: 0  (0.0%)
+    sites where buggy line matches train-line (comments stripped): 201  (20.8%)

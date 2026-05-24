@@ -1,0 +1,100 @@
+# Run #9: from-scratch training with embedding surgery + adversarial marker injection.
+#
+# Background. Audit at 2026-05-22 PM found:
+#   - Training corpus (system_trajectory_843 + sft_safe_25k): ZERO `// FAILS` markers.
+#   - Real-bug eval corpus: 42.9% of records have `// FAILS`.
+#   - Leak is therefore a Qwen pretraining-prior interaction with eval markers,
+#     not a finetuning-data leak. Run #8's K=4 mixed-marker policy created
+#     within-class noise (// ok on bug lines) and collapsed held-set to chance.
+#
+# Run #9 strategy (per V7 research + dataset re-audit):
+#   1. Train from scratch (no resume): cleaner experimental comparison to run #7.
+#   2. Apply embedding surgery at init: replace input-embed rows for FAILS/fails/FAIL
+#      with the mean of neutral-comment-token embeddings. Wipes pretraining prior.
+#   3. Train with `marker_aug_mode=adversarial`: inject `// FAILS`-family marker on
+#      a uniformly-random NON-BUGGY line with prob 0.6 across K=2 copies. Marker is
+#      anti-correlated with label; no within-class noise.
+#   4. Full schedule like run #7 (3 epochs, lr 1e-4) so the model has the same
+#      training budget as the marker-leaky baseline.
+
+model:
+  backbone: "Qwen/Qwen2.5-Coder-1.5B"
+  sentinel_token: "<|fim_pad|>"
+  lora:
+    rank: 16
+    alpha: 32
+    dropout: 0.05
+    target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+    embed_lora_rank: 8
+  head:
+    hidden_dim: 256
+    dropout: 0.1
+    init_std: 0.02
+  lse:
+    # Match run #7's sharpened annealing (1.0 -> 0.3) since we're training from scratch.
+    temp_start: 1.0
+    temp_end: 0.3
+
+data:
+  system_trajectory_path: "data/raw/system_trajectory_843.jsonl"
+  sft_safe_path: "data/raw/sft_safe_25k.json"
+  extra_trajectory_paths:
+    - "data/raw/algorithmic_trajectory_9040.jsonl"
+  extra_sft_paths:
+    - "data/raw/sft_part2_4557.json"
+  cache_dir: "data/cache"
+  max_seq_len: 4096
+  max_diff_lines: 3
+  split:
+    n_eval_specs: 30
+    sft_eval_frac: 0.10
+    seed: 42
+
+train:
+  optimizer: "adamw"
+  lr: 1.0e-4            # match run #7 (training from scratch)
+  betas: [0.9, 0.95]
+  weight_decay: 0.1
+  warmup_frac: 0.03
+  cosine_end_frac: 0.10
+  epochs: 3             # match run #7 schedule
+  micro_batch_size: 16
+  grad_accum: 1
+  precision: "bf16"
+  gradient_checkpointing: true
+
+  batch_min_traj_triples: 2
+  batch_min_safe_pairs: 4
+
+  loss_weights:
+    spec: 3.0
+    line: 1.0
+  line_loss:
+    margin: 1.0
+
+  stop_point:
+    min_train_steps_before_check: 200
+    loss_plateau_window: 200
+    min_eval_auroc_epoch_1: 0.0     # disabled (we know what we're doing)
+
+  # Adversarial marker injection (run-#9 policy).
+  # K=2 means 1 original + 1 perturbed copy per Example. marker_prob=0.6
+  # gives the model strong, consistent anti-correlated marker signal without
+  # the data-bloat / under-training problem of K=4.
+  marker_aug_k: 2
+  marker_aug_prob: 0.6
+  marker_aug_positive_prob: 0.0   # NO positive markers — they caused run #8's noise
+  marker_aug_mode: "adversarial"  # only inject // FAILS-family on non-bug lines
+
+eval:
+  every_n_steps: 500
+  probe_batch_size: 32
+
+checkpoint:
+  dir: "checkpoints/run9_embed_surgery"
+
+logging:
+  wandb_project: "ebm-verus"
+  log_every: 10
+  energy_histogram_every: 100
+  input_grad_probe_every: 500

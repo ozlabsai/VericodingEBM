@@ -1,0 +1,12 @@
+{
+  "n_records_evaluated": 50,
+  "sanity_orig_impl_verifies": 0,
+  "sanity_orig_impl_verifies_rate": 0.0,
+  "treatment_repair_at_1": 11,
+  "treatment_repair_rate": 0.22,
+  "full_resample_repair_at_1": 10,
+  "full_resample_repair_rate": 0.2,
+  "mcnemar_treatment_only_wins_b": 3,
+  "mcnemar_full_only_wins_c": 2,
+  "mcnemar_two_sided_mid_p": 1.0
+}

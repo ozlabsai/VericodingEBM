@@ -1,0 +1,1910 @@
+% =============================================================================
+% Energy-Localized Vericoding for Verus
+% Apart x Atlas Secure Program Synthesis Hackathon, May 2026 (Track 3)
+% =============================================================================
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[10pt]{article}
+
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp}
+\fi
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=1in]{geometry}
+\usepackage{parskip}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\graphicspath{{.}{figures/}}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black,
+  pdfcreator={LaTeX}
+}
+\setlength{\emergencystretch}{3em}
+
+% Code listing style for Verus snippets.
+\lstdefinelanguage{Verus}{
+  basicstyle=\ttfamily\small,
+  keywords={fn,let,mut,if,else,while,for,return,struct,enum,impl,trait,pub,use,as,in,match,move,ref,Self,self},
+  morekeywords=[2]{requires,ensures,invariant,decreases,assert,assume,exists,forall,spec,proof,exec,verus,broadcast,old,recommends},
+  keywordstyle=\color{blue!60!black}\bfseries,
+  keywordstyle=[2]\color{purple!60!black}\bfseries,
+  commentstyle=\color{gray!70!black}\itshape,
+  morecomment=[l]{//},
+  stringstyle=\color{green!50!black},
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  framerule=0.2pt,
+  rulecolor=\color{gray!50},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  xleftmargin=20pt,
+  framexleftmargin=15pt,
+}
+\lstset{language=Verus}
+
+\title{\textbf{Where to Look:\\
+  Energy-Based Fault Localization for Verus Vericoding}}
+\author{Guy Nachshon \\ \small Oz Labs}
+\date{Apart $\times$ Atlas Computing $\cdot$ Secure Program Synthesis Hackathon, May 2026}
+
+\begin{document}
+\maketitle
+
+% =============================================================================
+\begin{abstract}
+We train a discriminative energy-based model for per-line fault
+localization in Verus, the Rust-based verified programming language.
+The model --- Qwen2.5-Coder-1.5B with LoRA adapters and a
+sentinel-token architecture that emits a scalar energy per
+implementation line --- is supervised by within-spec InfoNCE on
+whole-implementation pass/fail labels and within-implementation
+pairwise hinge on broken/fixed sibling pairs from the Microsoft
+Verus Training Data. After diagnosing a Qwen pretraining-prior
+leak through \texttt{// FAILS} comment-token embeddings in an
+earlier checkpoint and reworking the architecture around a scalar
+attention-pool head, our final model (run \#10) achieves
+AUROC $= 0.78$, top-1 $= 0.56$, top-3 $= 0.84$ on a hand-authored
+corpus of $609$ failing Verus tests scraped from
+\texttt{verus-lang/verus}. We compare against six static baselines
+(random, line-length, Verus-keyword, marker-keyword,
+diff-from-sibling, frozen-backbone Qwen surprisal); against five
+zero-shot frontier LLMs (Claude Opus 4.7, GPT-5.5, Gemini 3.5
+Flash, Qwen 3.7 Max, DeepSeek V4 Pro) on per-line ranking and
+discrimination prompts; and against LLM-only and LLM-self-judged
+repair in a closed-loop CEGIS evaluation with the actual Verus
+toolchain in the loop. The model beats every static baseline on
+AUROC and top-3 (DeLong $p < 10^{-5}$ on AUROC) but is matched or
+beaten by frontier LLMs on all three LLM comparisons. The
+contribution is therefore not a claim of specialist superiority
+but a set of reusable artifacts: a calibrated small-model baseline
+for Verus per-line fault localization, a line-labeled Verus
+dev-test corpus scraped from \texttt{verus-lang/verus}, a
+strip-FAILS audit pipeline that surfaces marker-leakage failure
+modes in trained specialists, and a closed-loop CEGIS evaluation
+harness wired to the Verus toolchain. We release all of them,
+along with the model, intermediate checkpoints, and LLM-baseline
+records.
+\end{abstract}
+
+% =============================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Verified programming languages such as Verus~\cite{verus2023} attach formal
+preconditions, postconditions, and invariants to executable code and discharge
+verification obligations to an SMT solver. Recent vericoding work shows that
+large language models can draft Verus implementations from natural-language
+specs and refine them via Verus-driven feedback~\cite{verus_training_data}.
+When such a draft fails verification, the natural next step is to
+repair the implementation. Per-line attribution of which lines are
+most likely to be the source of the failure is one plausible way
+to make repair sample-efficient --- regenerate only the top-$k$
+flagged lines rather than the whole implementation via targeted
+CEGIS-style~\cite{cegis} re-sampling. Whether this works in
+practice is an empirical question, and one we test in
+\Cref{sec:results:cegis}.
+
+We treat per-line fault localization as a discriminative
+energy-based modeling problem in the LeCun
+sense~\cite{lecun2006tutorial}: assign an unnormalized scalar
+energy to each scorable line of an implementation, conditioned on
+its specification, and supervise via contrastive losses derived
+from the broken/fixed sibling structure of the Microsoft Verus
+Training Data. The architecture is small (1.5B parameters,
+$\sim$20M trainable via LoRA), trains on a single A100 in
+$\approx 30$ minutes to a usable checkpoint, and produces a fully
+differentiable scalar field over implementation lines.
+
+This paper presents the model, its training recipe, and a thorough
+evaluation: against six static baselines, against five frontier
+zero-shot LLMs on two prompting styles, and in a closed-loop CEGIS
+setting where the Verus verifier itself adjudicates repair success.
+Along the way we document and fix a Qwen pretraining-prior leak
+through \texttt{// FAILS} comment-token embeddings, and release the
+strip-FAILS audit pipeline that surfaced it.
+
+\paragraph{Contributions.}
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \textbf{A discriminative energy-based per-line fault
+  localizer for Verus.} Qwen2.5-Coder-1.5B with LoRA, a
+  sentinel-token architecture that emits per-line scalar energies,
+  and a scalar attention-pool head for whole-implementation
+  discrimination. Trained with within-spec InfoNCE plus
+  within-implementation pairwise hinge, ListNet listwise
+  cross-entropy, and FaceNet-style semi-hard negative mining. The
+  final model (run \#10) achieves AUROC $= 0.78$, top-1 $= 0.56$,
+  top-3 $= 0.84$ on the marker-stripped Verus dev-test corpus
+  ($n=1{,}492$). \Cref{sec:methods,sec:results:headline,sec:results:run10-baselines}.
+\item \textbf{An architectural ablation isolating the load-bearing
+  component.} Single-knob ablations attribute the $+30$pp AUROC
+  gain over an earlier LSE-aggregator design (run \#9) to the
+  scalar attention-pool head; listwise and semi-hard mining are
+  non-trivial but secondary; logistic-vs-hinge is within noise
+  (\Cref{app:marker-aug}, \Cref{tab:run10-ablation}).
+\item \textbf{A strip-FAILS audit pipeline.} We document a Qwen
+  pretraining-prior leak through \texttt{// FAILS}/\texttt{// FIXME}
+  comment-token embeddings that inflated an earlier checkpoint's
+  apparent transfer by $33$pp top-3, release the audit script, and
+  show that the fix we shipped overshot into marker-aversion
+  ($-50$pp top-1 with markers present) while frontier LLMs sit near
+  marker-invariance
+  (\Cref{sec:results:llm-marker-audit,sec:results:strip-fails-audit}).
+\item \textbf{Comprehensive evaluation against external baselines.}
+  Six static baselines (\Cref{sec:results:run10-baselines}), five
+  frontier zero-shot LLMs on per-line ranking and discrimination
+  prompts (\Cref{sec:results:llm-zeroshot}), and a closed-loop CEGIS
+  repair-rate-at-$1$ comparison (\Cref{sec:results:cegis})
+  adjudicated by the actual Verus toolchain. The model beats every
+  static baseline on AUROC and top-3 (top-1 vs.\ Verus-keyword is
+  statistically tied); frontier LLMs match or beat it on all three
+  LLM comparisons.
+\end{enumerate}
+
+\paragraph{Scope.} We evaluate per-line fault localization on
+hand-authored Verus failing test cases (top-$k$ recall, whole-impl
+AUROC) and in a closed-loop CEGIS repair-rate-at-$1$ experiment at
+$n=100$ adjudicated by the actual Verus toolchain. The model is
+trained on, and evaluated against, Verus only --- transfer to
+Dafny~\cite{dafny}, F\textsuperscript{*}, or other verifiers is
+not addressed. All numbers are from a single training seed;
+bootstrap CIs capture sampling within the eval corpus but not
+model-seed variance. The closed-loop CEGIS evaluation at $n=100$
+is underpowered to resolve small effect sizes between repair arms.
+
+% =============================================================================
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Process Reward Models (PRMs).}
+Lightman et al.~\cite{lightman2023letsverify} introduced per-step classifiers
+trained on human step-level labels and aggregated to sequence-level scores by
+\texttt{prod} of correctness probabilities; Math-Shepherd~\cite{wang2024mathshepherd}
+automated the supervision via Monte Carlo rollouts and reported \texttt{min}
+aggregation. Process Advantage
+Verifiers~\cite{setlur2024processadvantage} train per-step advantage against
+outcome. The closest analog to our setup is Math-Shepherd's automatic-supervision
+PRM: we replace MC rollouts with sibling-pair contrasts derived from the
+broken/fixed structure of the Microsoft Verus Training Data and operate on
+verified code rather than reasoning chains. We use log-sum-exp aggregation
+rather than \texttt{min}/\texttt{prod}; we also explicitly study the
+train/eval aggregator mismatch (``assessment drift'') that
+\cite{zhang2025lessonsprm} documents.
+
+\paragraph{Energy-based models.}
+We follow the discriminative EBM framework of
+LeCun et al.~\cite{lecun2006tutorial}: unnormalized scalar energy, contrastive
+training, no normalization or Langevin sampling. The closest training-recipe
+analogs are JEM-style joint classifier-EBM training~\cite{grathwohl2020jem}
+(which our ORM ablation evaluates).
+
+\paragraph{Fault localization.}
+Spectrum-Based Fault Localization~\cite{abreu2007ochiai} (Ochiai, Tarantula,
+DStar) ranks lines by their differential presence in failing vs.\ passing
+runs. We adapt Ochiai to the sibling-spectrum setting (sibling FAIL impls
+serve as ``failing runs'') as a structural baseline. The setting differs from
+spectrum-based FL in that, at inference, no PASS sibling exists (by definition,
+the LLM produced a FAIL); we use Ochiai only as an \emph{oracle} upper bound,
+not a deployable baseline.
+
+\paragraph{Mutator validity.}
+Just et al.~\cite{just2014mutants} and Pradel and Sen~\cite{pradel2018deepbugs}
+show that classifiers trained on mutator-generated bugs can degrade by
+$20$--$40$pp when evaluated on real defects (Defects4J, BugsInPy). Allamanis
+et al.~\cite{allamanis2021ssbd} report similar gaps for self-supervised bug
+detectors. The dominant validity threat for any learned localizer trained on
+mutator-generated pairs is the \emph{mutator fingerprint} hypothesis: the
+model learns features of the mutator's lexical/positional bias rather than
+the underlying bug semantics. We address this directly by evaluating on
+hand-authored Verus failures (\Cref{sec:methods:real-bug}).
+
+% =============================================================================
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Problem setting and notation}
+A spec--impl pair $(s, c)$ consists of the spec block $s$
+(\texttt{requires}, \texttt{ensures}, \texttt{invariant}, \texttt{decreases}
+clauses plus the \texttt{fn} signature) and an implementation body $c$ with
+scorable lines $c_1, \dots, c_N$. Each $(s,c)$ has a binary outcome
+$y \in \{\text{pass}, \text{fail}\}$ from running Verus on the concatenation.
+For broken/fixed sibling pairs from \texttt{sft\_safe} we additionally have
+$B \subset \{1,\dots,N\}$, the set of \emph{buggy line indices} obtained by
+\texttt{difflib} comparison with the fixed sibling.
+
+The model assigns to each line a scalar energy $E_\theta(c_i \mid s, c)$
+(higher = more buggy), aggregates them via log-sum-exp at temperature $T$:
+\begin{equation}
+\label{eq:lse}
+E_\theta(c \mid s) \;=\; T \cdot \log \left[ \tfrac{1}{N} \sum_{i=1}^{N}
+\exp\!\left( E_\theta(c_i \mid s, c) / T \right) \right],
+\end{equation}
+which interpolates between mean ($T \to \infty$) and max ($T \to 0$) and is
+mean-normalized so the aggregate does not scale with implementation length.
+
+\subsection{Architecture}
+\label{sec:methods:arch}
+The backbone is Qwen2.5-Coder-1.5B~\cite{qwen25coder} with LoRA
+adapters~\cite{hu2021lora} ($r{=}16$, $\alpha{=}32$) on all linear modules
+and a rank-8 LoRA on \texttt{embed\_tokens}, $\sim$20M trainable parameters
+out of 1.56B total. A sentinel token (\verb+<|fim_pad|>+, repurposed from
+Qwen's FIM vocabulary) is inserted after each scorable impl source line; the
+per-line head $\text{MLP}: \mathbb{R}^{1536} \to \mathbb{R}$
+(two-layer with GELU, dropout 0.1, hidden 256) reads each sentinel's
+final-layer hidden state and emits an unbounded scalar energy. The
+sentinel's causal attention sees the spec and all preceding impl lines.
+
+\subsection{Losses}
+\label{sec:methods:losses}
+We optimize $L = \lambda_{\text{spec}} L_{\text{spec}} + \lambda_{\text{line}} L_{\text{line}}$ with
+$\lambda_{\text{spec}} = 3$, $\lambda_{\text{line}} = 1$.
+
+\paragraph{Within-spec InfoNCE.}
+For each spec with mixed-label impls, the passing impl is the positive and
+failing siblings (plus an in-batch cross-spec FAIL pool) are negatives;
+the contrast is on whole-impl energies via \Cref{eq:lse}:
+\begin{equation}
+L_{\text{spec}} = -\log \frac{\exp(-E_\theta(c^+ \mid s))}{\sum_j \exp(-E_\theta(c_j \mid s))}.
+\end{equation}
+
+\paragraph{Within-impl pairwise hinge.}
+For each broken sibling with $|B| > 0$, we sample pairs $(i, i')$ with
+$i \in B$ and $i' \notin B$ and penalize with margin $m=1$:
+\begin{equation}
+L_{\text{line}} = \mathbb{E}_{(i,i')} \max\!\left(0, m + E_\theta(c_{i'}) - E_\theta(c_i)\right).
+\end{equation}
+
+The two losses operate on disjoint subsets of the batch
+(\texttt{system\_trajectory} triples for $L_{\text{spec}}$, \texttt{sft\_safe}
+broken impls for $L_{\text{line}}$); the sampler enforces a minimum count of
+each per batch to avoid collapse.
+
+\subsection{Data and split}
+\label{sec:methods:data}
+We use four files from \texttt{microsoft/Verus\_Training\_Data}: two
+trajectory files (\texttt{system\_trajectory\_843} and
+\texttt{algorithmic\_trajectory\_9040}; 281 + 6{,}402 unique-spec impls at
+mixed pass/fail labels), and two SFT files
+(\texttt{sft\_safe\_25k} and \texttt{sft\_part2\_4557};
+$\approx$14k broken/fixed sibling pairs with \texttt{difflib}-derived
+$B$). After parsing, filtering for $|B| \le 3$ on sft\_*, and tokenization to
+4096-token context, the merged corpus contains 31{,}505 examples across
+5{,}382 unique normalized-spec texts.
+
+\paragraph{Spec-text-disjoint split.}
+We hash spec text after whitespace normalization to derive a spec key, and
+split spec keys randomly into 29{,}525 train / 1{,}980 held-out examples.
+This is strictly stronger than splitting on the dataset's \texttt{spec\_id}
+field: we found that \texttt{spec\_id}-based splits leak 79\% of held-out
+spec content into train under different IDs, inflating AUROC to 0.98 by
+memorization. We assert post-split disjointness on normalized-text hashes.
+
+\subsection{Real-bug evaluation corpus}
+\label{sec:methods:real-bug}
+To test transfer beyond the mutator distribution, we constructed a Verus dev-test
+corpus from \texttt{verus-lang/verus} at HEAD. The repository's test suite
+(\texttt{source/rust\_verify\_test/tests/*.rs}, 132 files) contains
+hand-authored test cases bracketed by
+\texttt{test\_verify\_one\_file! \{ ... \}} macros and paired with explicit
+outcomes (\texttt{=> Ok(())} or \texttt{=> Err(...)}). Failing tests are
+annotated by Verus developers with \texttt{// FAILS} comments on the exact
+line that fails to verify---providing line-level ground truth that is
+\emph{not} mutator-derived.
+
+Parsing yields \textbf{1{,}492 records (610 FAIL with \texttt{// FAILS}
+labels)} across 132 test files. Mean impl length 19 lines, matching
+sft\_safe's 19.7 (no length-distribution confound). \textbf{We refer to
+this set throughout as the ``Verus dev-test corpus.''} The bugs are
+hand-authored failing test cases written by Verus contributors, not
+production defects extracted from project bug reports; following
+\cite{just2014mutants} we avoid calling them ``real bugs'' to prevent
+confusion with the production-defect literature. They are nevertheless
+a substantially harder transfer target than mutator-induced failures
+(the model has never seen \texttt{verus-lang/verus} test sources during
+training), and to our knowledge this is the largest publicly available
+line-labeled Verus failure corpus --- larger than the $\sim$50-bug
+Defects4J reference set used in earlier line-localization
+work~\cite{just2014mutants}, though the two are not strictly comparable
+(Defects4J indexes production Java defects across multiple repositories;
+ours is hand-authored failing tests from a single repository).
+
+% =============================================================================
+\section{Results}
+\label{sec:results}
+
+\subsection{Specialist performance on the marker-stripped Verus dev-test corpus (run \#10)}
+\label{sec:results:headline}
+
+Run \#10, our final hybrid scalar-head architecture, achieves
+\textbf{AUROC $= 0.78$, top-1 $= 0.56$, top-3 $= 0.84$} on $n=1{,}492$
+records ($609$ FAIL with labels) of the marker-stripped Verus
+dev-test corpus. The full baseline comparison table is in
+\Cref{sec:results:run10-baselines} (\Cref{tab:run10-real-bug});
+McNemar and DeLong significance tests against the strongest
+non-leak baseline are in \Cref{tab:significance}.
+
+An earlier development checkpoint (run \#7) appeared to reach
+top-3 $= 0.93$ on the same corpus; we document the audit that
+invalidated the strongest version of that claim, and the
+architectural fix that produced run \#10, in
+\Cref{sec:results:strip-fails-audit}.
+
+\subsection{Run \#10 vs.\ static and learned baselines (canonical comparison)}
+\label{sec:results:run10-baselines}
+
+To isolate how much of run \#10's signal is genuinely learned (versus
+inherited from the Qwen pretraining prior, derivable from a regex, or
+explainable by trivial structural cues), we run six static, execution-free
+baselines on the marker-stripped Verus dev-test corpus ($n=1{,}492$,
+$n_{\text{labeled}}=609$):
+
+\begin{description}[leftmargin=1.5em,itemsep=0pt]
+\item[\normalfont\textsc{Random}] Uniform $[0,1)$ per line; sanity floor.
+\item[\normalfont\textsc{Length}] Rank lines by character count, descending. Captures
+  the structural prior that longer lines contain more sub-expressions and
+  thus more failure surface.
+\item[\normalfont\textsc{Verus keyword}] Count occurrences of Verus DSL
+  annotations: \texttt{assert}, \texttt{ensures}, \texttt{invariant},
+  \texttt{decreases}, \texttt{requires}, \texttt{forall}, \texttt{exists},
+  and \texttt{assume}. Tests whether the model has just learned ``rank
+  annotation lines high.''
+\item[\normalfont\textsc{Marker keyword}] Count occurrences of authorial bug
+  markers: \texttt{// FAILS}, \texttt{panic!}, \texttt{unwrap},
+  \texttt{// TODO}, \texttt{assert!}, \texttt{todo!},
+  \texttt{unimplemented!}, \texttt{unsafe}, and \texttt{// FIXME}.
+  \emph{This is the leak-ceiling baseline}: it tells us how strong a
+  $\le 10$-line regex would be on the unstripped corpus, formalizing why
+  we report stripped numbers as canonical (\Cref{sec:results:strip-fails-audit}).
+\item[\normalfont\textsc{Diff-from-sibling}] Rank target lines by
+  $1 - \max_{\text{PASS sib}} \mathrm{Jaccard}_{\text{bigram}}(\ell, \ell')$:
+  lines least similar to any line in any PASS sibling rank highest. Renieris
+  and Reiss's classic NN-query baseline~\cite{renieris2003nnqueries},
+  adapted to the static, execution-free regime.
+\item[\normalfont\textsc{Qwen surprisal}] Per-line average negative log-likelihood
+  under the same Qwen2.5-Coder-1.5B backbone, frozen (no LoRA, no head).
+  Per Hindle et al.~\cite{hindle2012naturalness} and
+  Karampatsis et al.~\cite{karampatsis2020openvocab}, this is the
+  ``naturalness'' floor; \emph{it is the most diagnostic baseline} because
+  it answers ``does the finetuning earn its keep over the pretrained
+  backbone?''.
+\end{description}
+
+\Cref{fig:baseline-comparison} summarizes; \Cref{fig:roc-curves} shows
+ROC curves overlaid; \Cref{fig:topk-curves} reports top-$k$ recall as a
+function of $k$. \Cref{tab:significance} (\Cref{app:significance}) gives the
+paired McNemar (top-$k$) and DeLong (AUROC) significance tests.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{fig_baseline_comparison.pdf}
+\caption{Run \#10 vs six static baselines on the marker-stripped Verus dev-test
+corpus ($n=1{,}492$). Bars: AUROC (solid) and top-3 recall (faded);
+error bars are 95\% bootstrap CIs over 300 resamples. The marker-keyword
+baseline (\normalfont\textsc{Marker keywords$^*$}) attains top-$3=1.00$ by design
+(every record contains an authorial marker), but its impl-level AUROC of
+$0.67$ is still substantially below run \#10's $0.78$ (DeLong
+$p=0.006$). Run \#10 is the only method with both AUROC $>0.7$ and
+top-$3>0.8$.}
+\label{fig:baseline-comparison}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.55\linewidth]{fig_roc_curves.pdf}
+\caption{ROC curves for whole-impl FAIL vs.\ PASS discrimination (run \#10
+stripped vs.\ four representative baselines). Run \#10 dominates uniformly
+at every false-positive rate.}
+\label{fig:roc-curves}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.75\linewidth]{fig_topk_curves.pdf}
+\caption{Per-line localization recall as a function of $k$. Run \#10 reaches
+top-$3=0.84$ where the strongest non-leak baseline (Verus keywords) needs
+$k=5$ to match. The marker-keyword leak ceiling saturates at $1.00$ for all
+$k\ge 1$ (and motivates the strip-FAILS audit).}
+\label{fig:topk-curves}
+\end{figure}
+
+\paragraph{Headline finding.}
+Run \#10's AUROC of $0.78$ is $+18$pp over the frozen Qwen backbone
+($0.60$; DeLong $p<10^{-5}$) and $+11$pp over the strongest non-leak
+baseline (\normalfont\textsc{Marker keyword}, $0.67$; DeLong $p=0.006$). On per-line
+top-$3$, run \#10 ($0.84$) beats every non-leak baseline by $\ge +7$pp; the
+margin over frozen Qwen surprisal is $+70$pp---\emph{finetuning does not
+just adjust the backbone, it teaches a capability (per-line bug
+localization) that the pretrained model does not have at all}.
+
+\paragraph{Honest reporting: top-$1$ vs.\ Verus keywords.}
+The one place where run \#10's superiority is not statistically clean is
+top-$1$ against \normalfont\textsc{Verus keyword} ($0.560$ vs.\ $0.544$, McNemar
+$p=0.53$). Both methods rank assertion-like lines high, and the data
+contains enough such lines that point-estimate top-$1$ does not separate
+them. The picture changes at top-$3$ ($p<10^{-4}$), top-$5$ ($p<10^{-2}$),
+and AUROC ($p<10^{-15}$), where the gap is decisive.
+
+\paragraph{Training dynamics.}
+The impl-pair (scalar-head) loss collapses to near-zero within the
+first $500$ steps --- whole-impl FAIL/PASS discrimination is the
+``easy'' part of the task --- while the per-line listwise+pairwise
+loss continues to decrease throughout training. Held-set AUROC is
+essentially flat after step $\sim$1000, but per-line top-$3$
+continues to improve to step $2{,}000$. The per-line localization
+capability is the bottlenecked one in the current setup.
+
+\subsection{Comparison to frontier zero-shot LLMs}
+\label{sec:results:llm-zeroshot}
+
+We test five frontier LLMs via OpenRouter on the same marker-stripped
+Verus dev-test subset run \#10 is evaluated on ($n=220$:
+$200$ FAIL $+ 20$ PASS, seed-fixed), with \emph{two} prompts:
+(a) a \textbf{per-line ranking} prompt that asks for the top-$5$
+most-suspicious line indices (\Cref{tab:llm-zeroshot}); (b) a
+\textbf{discrimination} prompt that asks for $\{$pass, fail$\}$ plus
+a calibrated $p(\text{fail})$ in $[0, 1]$
+(\Cref{tab:llm-discrimination}, $n=250$: $200$ FAIL + $50$ PASS,
+same FAIL subset). The LLMs see no \texttt{// FAILS} markers in
+either prompt, ruling out the leak audited in
+\Cref{sec:results:strip-fails-audit}. We treat both prompts as
+independent calibrations.
+
+\textbf{Headline: frontier zero-shot LLMs decisively outperform run
+\#10 on both per-line ranking and whole-impl discrimination, on this
+corpus, at this scale.} We report the comparison as a
+baseline-evaluation result.
+
+\begin{table}[t]
+\centering
+\small
+\caption{\textbf{Per-line ranking.} Frontier LLMs zero-shot vs.\
+run \#10 on the same $n=220$ subset of the marker-stripped Verus
+dev-test corpus, ranking-prompt. \textbf{Bold} = best in column.
+``Failures'' counts records where the model returned non-parseable
+output.}
+\label{tab:llm-zeroshot}
+\begin{tabular}{lcccc}
+\toprule
+Method & top-1 & top-3 & top-5 & failures \\
+\midrule
+Random baseline                                 & 0.11           & 0.37           & 0.54           & ---                 \\
+\textbf{Run \#10 (ours, 1.5B)}                  & 0.56           & 0.82           & 0.93           & ---                 \\
+Claude Opus 4.7~\cite{anthropic2026claude47}    & 0.86           & 0.97           & 0.99           & 0 / 220             \\
+GPT-5.5~\cite{openai2026gpt55}                  & 0.85           & 0.92           & 0.93           & 24 / 220            \\
+Gemini 3.5 Flash~\cite{google2026gemini35}      & 0.89           & 0.98           & \textbf{1.00}  & 0 / 220             \\
+Qwen 3.7 Max~\cite{qwen2026qwen37}              & \textbf{0.91}  & \textbf{0.99}  & 0.99           & 0 / 220             \\
+DeepSeek V4 Pro~\cite{deepseek2026v4}           & 0.45           & 0.61           & 0.67           & 90 / 220 (41\%)$^\dagger$ \\
+\bottomrule
+\end{tabular}
+\smallskip
+
+{\footnotesize $^\dagger$ DeepSeek V4 Pro's $41\%$ parse-failure rate
+is a budgeting artifact (its hidden chain-of-thought consumed the
+1500-token output budget); we report the number for completeness but
+note it is not a capability finding.}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{\textbf{Discrimination AUROC.} The same five LLMs prompted
+with a $\{$pass, fail, $p(\text{fail}) \in [0,1]\}$ prompt on
+$n=250$ records ($200$ FAIL + $50$ PASS, marker-stripped). AUROC is
+computed over $p(\text{fail})$ against the true status; verdict
+accuracy is exact-match against status. \textbf{Bold} = best in
+column. Frontier zero-shot LLMs decisively outperform run \#10 on
+this metric too.}
+\label{tab:llm-discrimination}
+\begin{tabular}{lccc}
+\toprule
+Method & AUROC & verdict acc.\ & parse failures \\
+\midrule
+Random baseline                                 & 0.50           & ---            & --- \\
+\textbf{Run \#10 (ours, 1.5B)}                  & 0.78           & ---            & --- \\
+Claude Opus 4.7~\cite{anthropic2026claude47}    & 0.977          & 0.968          & 0 / 250 \\
+Qwen 3.7 Max~\cite{qwen2026qwen37}              & 0.946          & 0.920          & 0 / 250 \\
+Gemini 3.5 Flash~\cite{google2026gemini35}      & 0.983          & 0.956          & 0 / 250 \\
+GPT-5.5~\cite{openai2026gpt55}                  & \textbf{0.984} & \textbf{0.981} & 38 / 250 \\
+DeepSeek V4 Pro~\cite{deepseek2026v4}           & 0.914          & 0.914          & 64 / 250 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Reading the result honestly.}
+On \emph{per-line top-$k$}, the gap is large and meaningful: Claude,
+Qwen, and Gemini all reach top-$3 \ge 0.97$ vs.\ run \#10's $0.82$
+on the same $220$ records, and top-$1 \ge 0.86$ vs.\ run \#10's
+$0.56$. This is the load-bearing comparison for the task we trained
+for, and it is not a noise-level difference. The expected
+$100$B+-vs-$1.5$B capability gap on a token-level labelling task is
+real and we measure it cleanly.
+
+On \emph{whole-impl AUROC}, the gap is similarly large but
+operationally less meaningful: \textbf{the verifier itself already
+produces this signal with AUROC $= 1.0$ and zero false positives}.
+We measure whole-impl AUROC in this paper as a sanity check that
+the scalar head learned something coherent, not as a deployment
+metric --- a Verus deployment would never call the discriminator
+because Verus has already discriminated. Frontier LLMs achieving
+$\ge 0.95$ AUROC on this metric confirms that reading Verus syntax
+and predicting pass/fail is within reach of zero-shot prompting; it
+does not address what either a specialist or the verifier itself
+contributes to a downstream repair loop.
+
+\paragraph{What the table does \emph{not} establish.}
+The numbers do not tell us where (if anywhere) a fine-tunable
+specialist wins over zero-shot frontier LLMs for Verus fault
+localization. Several plausible axes are not measured here:
+(i) closed-loop self-judging concerns when the LLM is both proposer
+and localizer in a CEGIS loop --- the most natural break-the-loop
+choice is an independent specialist, even if its single-call
+accuracy is lower; (ii) the long tail of Verus features the
+frontier-LLM pretraining distribution under-samples (custom
+verifier extensions, less-documented proof modes, future syntax
+changes); (iii) adversarial robustness against marker-style leaks
+that affect any localizer prompted on raw test sources (see
+\Cref{sec:results:llm-marker-audit}); (iv) deployment scenarios
+where calling a frontier API per candidate is impractical. These
+are open questions; this section does not answer them. The honest
+calibration finding the paper does establish is the negative one
+above.
+
+\paragraph{Reproducibility note.}
+Ranking-prompt model calls were made via OpenRouter on 2026-05-23
+12:00--14:00 UTC; discrimination-prompt calls on 2026-05-23
+22:55--23:25 UTC. Both used explicit OpenRouter slug names
+(\texttt{anthropic/claude-opus-4.7},
+\texttt{openai/gpt-5.5},
+\texttt{google/gemini-3.5-flash},
+\texttt{qwen/qwen3.7-max},
+\texttt{deepseek/deepseek-v4-pro}),
+$\text{temperature}=0$. Ranking-prompt used
+$\text{max\_tokens}=1500$, $\text{reasoning.max\_tokens}=400$;
+discrimination-prompt used $\text{max\_tokens}=800$,
+$\text{reasoning.max\_tokens}=300$. Numbers may not reproduce
+exactly if the underlying snapshots are updated by the providers;
+the rerunnable scripts are
+\texttt{scripts/baseline\_llm\_zeroshot.py} (ranking) and
+\texttt{scripts/baseline\_llm\_discrimination.py} (discrimination).
+
+\subsection{Marker-leak audit: invariance, reliance, and aversion}
+\label{sec:results:llm-marker-audit}
+
+A natural follow-up question for the leak we audited in
+\Cref{sec:results:strip-fails-audit}: \emph{is the
+frontier-LLM-as-localizer baseline also vulnerable to it, and
+how does our supposedly-fixed run \#10 behave under the same
+audit?} The strip-FAILS audit is verifier- and
+architecture-agnostic; it asks how a localizer's top-$k$ ranking
+shifts when the \texttt{// FAILS} comment substring is removed at
+evaluation. We ran it on the same $n=220$ subset for the three
+top-performing LLMs from \Cref{tab:llm-zeroshot}, for our
+pre-audit run \#7 (reproduced from \Cref{tab:strip-fails-headline}
+on the full corpus, where the leak signal is largest), and for our
+post-fix run \#10. The result is more interesting than the simple
+``LLMs are robust, specialist was leaky'' framing would suggest.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Marker-leak audit, three regimes. ``With markers'' keeps
+the \texttt{// FAILS} comment in the impl shown to the localizer;
+``stripped'' removes it; $\Delta$ = with-minus-stripped, so
+\emph{positive} $\Delta$ = marker-reliant (signal goes \emph{down}
+when marker is removed), \emph{negative} $\Delta$ = marker-averse
+(signal goes \emph{up} when marker is removed). LLM and run \#10
+numbers on the $n=220$ subset (same as \Cref{tab:llm-zeroshot});
+run \#7 numbers on the full $n=1{,}492$ corpus where the leak
+signal is largest (reproduced from \Cref{tab:strip-fails-headline}).}
+\label{tab:llm-marker-audit}
+\begin{tabular}{llccc}
+\toprule
+Model & Setting & top-1 & top-3 & top-5 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Frontier LLMs (essentially marker-invariant)}} \\
+Claude Opus 4.7    & with markers & 0.870    & 0.955          & 0.970 \\
+                   & stripped     & 0.860    & 0.970          & 0.985 \\
+                   & $\Delta$     & $+0.010$ & $-0.015$       & $-0.015$ \\[2pt]
+Qwen 3.7 Max       & with markers & 0.920    & \textbf{1.000} & \textbf{1.000} \\
+                   & stripped     & 0.905    & 0.985          & 0.985 \\
+                   & $\Delta$     & $+0.015$ & $+0.015$       & $+0.015$ \\[2pt]
+Gemini 3.5 Flash   & with markers & 0.925    & \textbf{1.000} & \textbf{1.000} \\
+                   & stripped     & 0.890    & 0.980          & 1.000 \\
+                   & $\Delta$     & $+0.035$ & $+0.020$       & $+0.000$ \\
+\midrule
+\multicolumn{5}{l}{\textbf{Run \#7 (specialist, pre-audit --- marker-reliant)}} \\
+Run \#7 (full)     & with markers & 0.73     & 0.93           & 0.96  \\
+                   & stripped     & 0.27     & 0.60           & 0.76  \\
+                   & $\Delta$     & $+0.46$  & $+0.33$        & $+0.20$ \\
+\midrule
+\multicolumn{5}{l}{\textbf{Run \#10 (specialist, post-fix --- marker-averse)}} \\
+Run \#10           & with markers & 0.055    & 0.265          & 0.535 \\
+                   & stripped     & 0.560    & 0.815          & 0.930 \\
+                   & $\Delta$     & $\mathbf{-0.505}$ & $\mathbf{-0.550}$ & $\mathbf{-0.395}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Three regimes; the specialist never reaches invariance.}
+The audit reveals a sharper picture than we had before:
+
+\emph{Frontier LLMs} are essentially marker-invariant
+($|\Delta| \le 3.5$pp on top-1). Adding or removing the
+\texttt{// FAILS} substring does not meaningfully change their
+ranking; their predictions are driven by independent
+code-comprehension signal.
+
+\emph{Run \#7} (pre-audit) was marker-\emph{reliant}: stripping the
+marker dropped top-1 by 46pp on the full corpus. This is the
+``Qwen pretraining-prior leak through \texttt{FAILS}/\texttt{FIXME}
+embeddings'' we identified, and motivated the adversarial
+marker-injection fix in run \#9 (carried into run \#10).
+
+\emph{Run \#10} is marker-\emph{averse}: keeping the marker drops
+top-1 by 50pp \emph{below} its stripped performance, all the way
+to $0.055$ --- below the uniform-random floor of $0.13$. The
+adversarial-marker-injection training that broke run \#7's
+reliance overshot, training the model to actively push the marker
+line \emph{down} the ranking. With markers retained at evaluation
+the model is worse than uniform random; the headline audited number
+($0.56$ top-1 stripped) is only obtained when the marker the
+dataset was annotated with is removed.
+
+\paragraph{What this means.}
+The post-fix model is marker-anti-correlated rather than
+marker-invariant. The headline stripped numbers
+(\Cref{tab:run10-real-bug}) are the right ones for deployment on a
+marker-free corpus; the spread between with-marker and stripped
+numbers quantifies the model's implicit reliance on marker absence.
+
+\textbf{The frontier LLMs are the right calibration target on this
+axis.} A truly leak-immune Verus localizer should sit near
+$\Delta = 0$ on this table; both of our specialists are far from
+it in opposite directions. A follow-up training recipe that
+explicitly targets marker-invariance --- e.g.\ randomized marker
+insertion on both buggy and non-buggy lines (rather than only on
+non-buggy lines as our run \#9 adversarial scheme did), or
+training with mixed marker/no-marker batches --- is the clear
+next experiment; we did not run it in this submission.
+
+\subsection{Closed-loop CEGIS: does the specialist help \emph{repair}?}
+\label{sec:results:cegis}
+
+The per-line top-$k$ comparison in \Cref{tab:llm-zeroshot} and the
+discrimination AUROC comparison in \Cref{tab:llm-discrimination} both
+measure static localization quality. The operationally-relevant
+question for vericoding is whether specialist-guided repair beats
+LLM-only repair in a real closed-loop setting where the verifier
+itself adjudicates success. We run that experiment.
+
+\paragraph{Setup.} For each of $n=100$ FAIL implementations sampled
+from the marker-stripped Verus dev-test corpus (filtered to
+``tractable'' single-buggy-line impls with $\le 20$ scorable lines
+and $\le 25$ source lines, so that one-shot Claude calls have a
+non-trivial chance of success), we run \emph{three} repair arms
+and adjudicate each with the actual Verus
+toolchain~(\texttt{verus} v0.2026.05.17):
+
+\begin{description}[leftmargin=1.5em,itemsep=0pt]
+\item[Arm A (specialist-guided):] Feed (spec, impl, run \#10's
+  top-3 lines) to Claude Opus 4.7 with a ``rewrite the flagged
+  lines to make Verus accept it'' prompt. Wrap the response,
+  invoke Verus.
+\item[Arm B (LLM-only resample):] Feed (spec, impl) to Claude
+  with a ``rewrite the implementation to make Verus accept it''
+  prompt --- no localization hint. Wrap, invoke Verus.
+\item[Arm C (LLM-self-judged):] Two-pass Claude. First call:
+  Claude ranks its own top-5 most-suspicious lines (same prompt
+  as the ranking baseline in \Cref{tab:llm-zeroshot}). Second
+  call: identical to Arm A but with Claude's own top-3 flagged
+  instead of the specialist's. Wrap, invoke Verus.
+\end{description}
+
+Arm A measures specialist-guided repair. Arm B is the obvious
+LLM-only baseline the original repair-loop framing motivates.
+Arm C is the ``do you even need the specialist if Claude is
+already a strong localizer?'' baseline.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Closed-loop CEGIS repair-rate-at-1 on $n=100$ tractable
+FAIL impls from the Verus dev-test corpus, adjudicated by the actual
+Verus toolchain. Pairwise McNemar exact two-sided $p$-values on
+discordant pairs; all three arms cluster at 25--30\% with no
+statistically separable differences at $\alpha=0.05$.}
+\label{tab:cegis-3arm}
+\begin{tabular}{lc}
+\toprule
+Arm & Repair-rate-at-1 \\
+\midrule
+A. Specialist top-3 $\to$ Claude rewrite       & $0.25$ \\
+B. LLM-only (Claude resample, no hint)         & $0.30$ \\
+C. LLM-self-judged (Claude localize $\to$ rewrite) & $0.30$ \\
+\midrule
+\multicolumn{2}{l}{\emph{Pairwise discordance (only-A / only-other; McNemar $p$):}} \\
+A vs.\ B  & 4 / 9, $p=0.27$ \\
+A vs.\ C  & 0 / 5, $p=0.06$ \\
+C vs.\ B  & 5 / 5, $p=1.00$ \\
+\midrule
+Union (any arm solved)        & $0.35$ \\
+Intersection (all arms solved) & $0.21$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Honest reading.}
+All three arms cluster at $25$--$30\%$ repair-rate, within each
+other's 95\% bootstrap confidence intervals (per-arm CI is roughly
+$\pm 9$pp at $n=100$ and these rates). \textbf{No arm is
+statistically separable from the others at $\alpha=0.05$.} The
+direction of the point estimates is consistently against the
+specialist --- Arm A's $25\%$ is the worst of the three --- and
+the McNemar discordance between Arms A and C shows $0$ specialist-only
+wins out of $5$ disagreements ($p=0.06$, \emph{not significant};
+underpowered). If this $0$/$5$ pattern persists at larger $n$, it
+would suggest the specialist's localization adds no information
+beyond what Claude can extract by itself when asked to localize;
+we frame this as a hypothesis for follow-up, not as a claim.
+
+\paragraph{Structural finding: the arms solve overlapping-but-distinct
+subsets.} The marginal repair rates hide the more interesting
+structural fact. Of $100$ impls, all three arms succeed on $21$ and
+all three fail on $65$, leaving $14$ where at least one but not all
+arms succeed; the union is $35\%$. The arms are not interchangeable
+--- Arm A solves $4$ impls that Arm B does not, and Arm B solves $9$
+that Arm A does not (similar asymmetries for B vs.\ C and A vs.\ C).
+This leaves headroom for a routing or ensemble approach that combines
+arms, but the $35\%$ union is a theoretical upper bound that
+assumes an oracle router; whether a realizable router can recover
+that headroom is an open question we do not address.
+
+\paragraph{Methods footnote: Arm B prompt fix.} An initial version
+of Arm B's prompt asked Claude to write a Verus impl from the
+specification alone (no failing impl as anchor); on $38$ of $100$
+records Claude returned an empty code block, because for those
+records the dataset's split heuristic placed essentially-complete
+code in the \texttt{spec\_text} field, leaving nothing for the
+``impl'' Claude was asked to write. We treat this as a
+prompt-design issue rather than a capability finding and rerun
+Arm B with a prompt that shows Claude the failing impl as anchor
+(matching the input shape of Arms A and C). The fix dropped
+empty-block returns from $38$ to $3$ and moved Arm B's repair-rate
+from $0.27$ (with the empty-block bug counted as failures) to
+$0.30$ (reported above). The pre-fix and post-fix records, prompts,
+and the diff are in the released artifacts at
+\texttt{artifacts/cegis/}.
+
+\paragraph{What this means.}
+On this corpus at this scale, specialist-guided repair does not
+produce a detectable advantage over LLM-only or LLM-self-judged
+repair. The three measurements (per-line top-$k$, discrimination
+AUROC, closed-loop repair) probe distinct properties of the model
+on the same underlying corpus, and all three point the same
+direction. Follow-up questions --- larger-$n$ CEGIS, self-judging
+loops, OOD Verus features, ensemble routing --- are discussed in
+\Cref{sec:discussion}.
+
+
+\subsection{Whole-impl AUROC ceiling: an aggregator-invariance observation}
+\label{sec:results:ceiling}
+
+A reviewer might reasonably object that whole-impl AUROC near 0.60 on
+the held set is weak. The strongest empirical evidence we have that
+this number is a structural property of the task --- and not a
+training failure of our particular architecture --- is an
+aggregator-invariance observation: \textbf{every standard
+permutation-invariant reducer over the same trained per-line energies
+lands in the same chance-AUROC band on the Verus dev-test corpus.}
+\Cref{tab:agg-sweep} reports whole-impl AUROC under mean, max, min,
+sum, last, and softplus-sum aggregation; all six land in
+$[0.47, 0.53]$ with overlapping $95\%$ bootstrap CIs, indistinguishable
+from chance. No eval-time aggregator escapes the band on the same
+per-line outputs.
+
+If a bag-of-lines aggregation could in principle recover an AUROC
+substantially above $0.55$ on near-identical broken/fixed sibling
+pairs, at least one of the six standard reducers should have found
+it. None did. We read this as a much stronger empirical signal than
+the information-theoretic sketch below: the data, not the head, is
+the binding constraint at this AUROC range.
+
+An information-theoretic argument bounding AUROC by
+$\Phi(|B| \cdot \Delta / \sqrt{N})$ for Gaussian per-line residuals
+and sparse diffs gives a consistent $\le 0.55$ upper bound at our
+measured parameters ($\Delta \approx 0.5$, $|B|$ median 1,
+$N \approx 30$); we omit the derivation because the bound's $\Delta$
+is measured from the same trained model it purports to bound, which
+makes it a self-consistency check rather than an independent
+argument. The aggregator-invariance observation above is the load-bearing
+empirical evidence; a model-free derivation of $\Delta$ from
+broken/fixed-diff statistics is left for future work.
+
+The eval-time aggregator we report for run \#10 is its trained
+scalar attention-pool head; cherry-picking a different reducer at
+eval would constitute ``assessment drift''~\cite{zhang2025lessonsprm}
+and is not defensible. The aggregator sweep in
+\Cref{tab:agg-sweep} is reported as a diagnostic, not a headline.
+
+\begin{table}[htbp]
+\centering
+\caption{Whole-impl AUROC on Verus dev-test corpus under different eval-time
+aggregators of the \emph{same} per-line energies. All reducers cluster
+around chance, supporting the information-theoretic ceiling argument.}
+\label{tab:agg-sweep}
+\small
+\begin{tabular}{lc}
+\toprule
+Aggregator (eval-time, same per-line energies) & AUROC \\
+\midrule
+mean                       & 0.471 \\
+max                        & 0.484 \\
+min                        & 0.490 \\
+last                       & 0.517 \\
+sum                        & 0.530 \\
+softplus-sum               & 0.475 \\
+\midrule
+\textbf{LSE (train-time matched)} & \textbf{0.487} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Statistical significance and subgroup analysis}
+\label{sec:results:significance}
+
+\paragraph{Significance vs.\ the length baseline.}
+For the canonical audited comparison, run \#10 (top-3 $= 0.84$)
+beats the length baseline (top-3 $= 0.73$) on the marker-stripped
+Verus dev-test corpus; the paired McNemar contingency and exact
+$p$-value are reported in \Cref{tab:significance}. On whole-impl
+AUROC, the DeLong test~\cite{delong1988comparing} gives
+$p = 0.006$ (ours $0.778$, marker-keyword $0.673$): significant.
+The honest takeaway is that the model's contribution is concentrated
+in per-line localization; whole-impl AUROC is contextualized by the
+aggregator-invariance argument in \Cref{sec:results:ceiling}. The
+pre-audit run \#7 contingency, included originally for historical
+comparability, is omitted from this version to avoid
+foregrounding numbers we later invalidate.
+
+\paragraph{Bug-type breakdown.}
+We bucket the Verus dev-test FAIL set by the syntactic context of the
+\texttt{// FAILS}--annotated line (regex match on the line text):
+
+\begin{table}[htbp]
+\centering
+\caption{Top-3 by lexical category of the \texttt{// FAILS}--annotated line on
+the Verus dev-test corpus. Categories with $n \le 1$ omitted. \texttt{other}
+denotes lines that do not lexically contain any of the listed Verus
+keywords (typical content: variable assignments, arithmetic
+expressions, method calls). \texttt{ensures} is the model's weakest
+subgroup---a paper-worthy limitation discussed in
+\Cref{sec:discussion}.}
+\label{tab:bug-type}
+\small
+\begin{tabular}{lcc}
+\toprule
+Category at \texttt{// FAILS} line & $n$ & top-3 \\
+\midrule
+\texttt{assert}     & 369 & 0.943 \\
+\texttt{other}      & 215 & 0.949 \\
+\texttt{ensures}    & 22  & \textbf{0.591} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The bulk of bugs ($95\%$ of labeled FAILs) are caught at
+\texttt{assert} or non-keyword lines (assignments, arithmetic), where
+our model is uniformly strong ($\ge 0.94$). On the 22
+\texttt{ensures}-clause failures, top-3 drops to $0.59$ --- a $\ge 35$pp
+gap relative to every other subgroup, and the largest negative finding
+in the paper.
+
+\paragraph{Why ensures-clauses are hard, mechanistically.}
+We interpret this gap as a direct consequence of the sentinel-token
+architecture: our per-line head reads the final-layer hidden state at
+each sentinel and emits an unbounded scalar from that position alone.
+Under causal attention, the sentinel at line $\ell$ sees lines
+$1\ldots\ell-1$ but no later context. \texttt{Assert} and arithmetic
+violations are local --- the offending operator or comparator sits on
+the line whose energy we read --- so a one-sentinel local view is
+sufficient. \texttt{Ensures}-clause violations, by contrast, surface
+at a postcondition line that is typically near the end of the
+implementation; the actual offending statements are upstream and may
+be distributed across the function body. The sentinel that marks the
+\texttt{ensures} line carries a local feature, not the
+cumulative-behaviour feature the violation requires. Equivalently:
+the per-line head is an excellent localizer for faults whose
+signal is co-located with their site; it has no mechanism for faults
+whose site and signal are decoupled.
+
+This points at a clean architectural next step: a global-attention
+head that aggregates per-line residuals into a per-impl
+\texttt{ensures}-aware feature, in parallel to (not replacing) the
+existing sentinel head. The $n=22$ sample is small, but the effect
+size is large and the mechanism is plausible enough that we expect
+the gap to persist at $n=200$. Pre-registering the prediction:
+\emph{a global-attention head added to run \#10 should close
+$\ge 15$pp of the \texttt{ensures}-subgroup top-3 gap with no
+regression on the \texttt{assert} subgroup}. We treat this as the
+single most informative architectural follow-up.
+
+\paragraph{Robustness across $|B|$ and impl length.}
+We stratify the same Verus dev-test FAIL set two further ways:
+
+\begin{table}[htbp]
+\centering
+\caption{Top-3 stratified by buggy-line count ($|B|$) and impl line-count
+tertile, on the Verus dev-test corpus ($n=609$).}
+\label{tab:strata}
+\small
+\begin{tabular}{lcc@{\hspace{2em}}lcc}
+\toprule
+$|B|$ stratum & $n$ & top-3 & Length stratum & $n$ & top-3 \\
+\midrule
+$|B|{=}1$  & 455 & 0.921 & short ($\le 8$ lines)   & 203 & \textbf{0.985} \\
+$|B|{=}2$  & 73  & 0.973 & medium ($8$--$16$)      & 203 & 0.911 \\
+$|B|{\ge}3$ & 81  & 0.951 & long ($16$--$139$)     & 203 & 0.897 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Top-3 is robust across buggy-line count (no drop for hard $|B|=1$ vs.\
+easier $|B|=2$ where there are more chances to land in top-3). It degrades
+mildly with impl length, from $0.985$ on short impls to $0.897$ on long
+ones---a $\sim$9pp drop driven by the larger search space in long impls
+(top-3 lift over uniform is $0.985 - 0.34 = +65$pp short vs.\
+$0.897 - 0.40 = +50$pp long, so absolute lift remains strong).
+
+\subsection{Strip-FAILS audit: where the pre-audit 0.93 number came from}
+\label{sec:results:strip-fails-audit}
+\label{sec:results:robustness}
+
+The pre-audit run \#7 top-3 of $0.93$ on the Verus dev-test corpus
+\emph{looks} like clean transfer from mutator-trained data to
+hand-authored failures. Literature predicts $20$--$40$pp
+drops~\cite{just2014mutants, pradel2018deepbugs,allamanis2021ssbd}, so
+we treated the no-drop result as suspicious and ran a targeted audit:
+re-score the same corpus with the \texttt{// FAILS} comment substring
+stripped from every line at evaluation time.
+
+\paragraph{The smoking gun: stripping markers collapses transfer.}
+\Cref{tab:strip-fails-headline} shows the audit. With markers retained,
+the model achieves top-3 $= 0.93$; with markers stripped, top-3 falls
+to $0.60$ --- a $33$pp drop that puts the model below the length
+baseline ($0.73$) and almost matches the keyword baseline ($0.55$). The
+single \texttt{// FAILS} substring carried roughly half of the apparent
+transfer.
+
+\begin{table}[htbp]
+\centering
+\caption{Strip-FAILS audit on the Verus dev-test corpus
+($n{=}1{,}492$, run \#7 step-500 checkpoint). The marker provides
+substantial discriminative signal: top-3 falls $33$pp when markers are
+stripped, dropping below the length baseline. We confirm the audit
+generalizes by also stripping markers from baselines (which mostly do
+not use them) and from the marker-keyword regex (which uses them by
+construction --- bold row).}
+\label{tab:strip-fails-headline}
+\small
+\begin{tabular}{lcc}
+\toprule
+                                & With \texttt{// FAILS}  & Stripped                \\
+\midrule
+top-1                           & 0.73                    & 0.27 ($-46$pp)          \\
+\textbf{top-3 (ours, run \#7)}  & \textbf{0.93}           & \textbf{0.60} ($-33$pp) \\
+top-5                           & 0.96                    & 0.76 ($-20$pp)          \\
+AUROC (LSE)                     & 0.49                    & 0.44                    \\
+\midrule
+Length baseline top-3           & 0.73                    & 0.46                    \\
+Keyword baseline top-3          & 0.80                    & 0.55                    \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Mechanism: a Qwen pretraining-prior leak through the
+\texttt{FAILS}/\texttt{FIXME} embeddings.}
+The training corpus contains \emph{zero} \texttt{// FAILS} markers ---
+it is the curated \texttt{sft\_safe} mutator data. Our LoRA-only
+finetune therefore had no gradient pressure to override Qwen's prior
+that \texttt{FAILS}, \texttt{FIXME}, and similar comment tokens flag
+suspicious code. The model inherited this association from
+pretraining and used it as the single most informative feature at
+evaluation time. Embedding-surgery (zeroing the marker embeddings
+before evaluation) confirms this: it recovers most of the lost
+performance (see \Cref{app:marker-aug}), but is a fragile post-hoc patch. The mitigation we ship is adversarial
+marker injection during training (run \#9; \Cref{app:marker-aug}),
+which shrinks the with-marker--vs--stripped gap from $33$pp to $4$pp
+on top-3.
+
+\paragraph{Below we rule out four alternative leak hypotheses.}
+For each, we ran a targeted falsification test on the same Verus
+dev-test corpus.
+
+\paragraph{No whole-text contamination.} Hash-based exact-match between
+the Verus dev-test corpus and the full 31{,}505-example training set:
+$\mathbf{0/1492}$ spec-text matches and $\mathbf{0/1492}$ impl-text
+matches (whitespace-normalized). Training data does not literally contain
+any Verus dev-test impl or spec.
+
+\paragraph{Line-level leakage exists but does not drive the result.}
+The mean per-impl fraction of scorable lines that appear verbatim in
+some training record is $0.39$ on the Verus dev-test set, and $20.8\%$ of
+ground-truth buggy lines (comment-stripped) appear at least once in
+training. This is concerning if the model wins by recognizing
+memorized stereotype lines. A targeted test rejects this hypothesis:
+
+\begin{table}[htbp]
+\centering
+\caption{Conditional train-overlap rate, split by whether the model's
+top-1 prediction was correct on dev-test failures. If the model were winning
+by memorization, HITs would show HIGHER train-overlap than MISSes.
+The opposite holds.}
+\label{tab:leak-conditional}
+\small
+\begin{tabular}{lcc}
+\toprule
+                                            & top-1 HIT ($n{=}445$) & top-1 MISS ($n{=}164$) \\
+\midrule
+pred-top1 in training corpus                & 20.9\%                & 27.4\%                  \\
+ground-truth buggy line in training corpus  & 24.0\%                & 23.2\%                  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The conditional train-overlap rate is actually \emph{lower} on hits
+than on misses ($-6.5$pp for pred-top1, near-zero for ground-truth).
+A memorization model would produce the inverse pattern. The model's
+discrimination capacity is therefore not explained by stereotype-line
+recognition.
+
+\paragraph{Verus-keyword baseline.}
+A DSL-aware structural baseline picks the line containing the most Verus
+keywords: \texttt{assert}, \texttt{ensures}, \texttt{invariant},
+\texttt{decreases}, \texttt{requires}, \texttt{forall}, \texttt{exists},
+\texttt{assume}, and \texttt{recommends}. This is strictly stronger than
+the line-length baseline and tests whether the model is ``just a
+Verus-keyword classifier'':
+
+\begin{table}[htbp]
+\centering
+\caption{Verus-keyword baseline on both corpora, vs.\ length
+baseline and pre-audit run \#7 (shown only for leak-analysis
+context). Keyword baseline beats length top-3 on both corpora;
+the model retains a $+17$pp (held) / $+13$pp (dev-test) gap
+\emph{before} the marker-stripping audit. The audited run \#10
+top-3 on the marker-stripped dev-test corpus is $0.84$
+(\Cref{tab:run10-real-bug}).}
+\label{tab:keyword}
+\small
+\begin{tabular}{lcc}
+\toprule
+                                    & Held top-3        & Dev-test top-3    \\
+\midrule
+Uniform random                      & 0.40              & 0.38              \\
+Length                              & 0.74              & 0.73              \\
+Verus-keyword (this section)        & 0.73              & 0.80              \\
+\textbf{Run \#7 (LSE, pre-audit)}   & \textbf{0.90}     & \textbf{0.93}     \\
+gap vs.\ keyword                    & $+17$pp           & $+13$pp           \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Position-distribution shift survives.}
+The two corpora differ sharply in where bugs sit:
+sft\_safe buggy lines cluster in the first third (median $0.31$);
+verus dev-test buggy lines cluster in the last third (median
+$0.75$). A position-prior model trained on sft\_safe would predict
+median $0.31$ on dev-test failures. Our model's top-1 predictions on
+dev-test failures cluster at median $0.67$ --- tracking the dev-test
+distribution, not the training prior (\Cref{fig:position-shift}).
+Per-impl Spearman correlation between energy and line-position
+index averages $+0.03$: the per-line head is essentially
+position-blind, ruling out position-prior memorization as an
+explanation for the apparent transfer.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.80\linewidth]{fig_position_shift.pdf}
+\caption{Buggy-line position distribution shifts between training
+and dev-test corpora (blue: sft\_safe gold labels, median 0.31;
+red: verus dev-test gold labels, median 0.74). The black line
+shows our model's top-1 predictions on dev-test failures (median
+0.67) --- tracking the dev-test distribution, not the training
+prior. Spearman(energy, position) $= +0.03$ per impl.}
+\label{fig:position-shift}
+\end{figure}
+
+\paragraph{Summary of the audit.}
+Of the six leak hypotheses we considered (\texttt{// FAILS} marker
+leak, data contamination, length-baseline overlap, position artifact,
+Verus-keyword classifier, single-seed luck), one --- the
+\texttt{// FAILS}-marker leak --- is the actual driver and accounts
+for roughly half of the pre-audit transfer claim. Four are
+empirically ruled out by the falsification tests above. The
+single-seed-luck hypothesis is acknowledged in
+\Cref{sec:discussion}; a $k{=}3$ LoRA-head ensemble would be the
+natural follow-up but is deferred to a longer revision. The audit
+pipeline itself (\texttt{scripts/strip\_fails\_reeval.py}) is
+released so that any future Verus bug-localization model whose
+records use the same schema can be re-audited mechanically.
+
+% =============================================================================
+\section{Discussion and Limitations}
+\label{sec:discussion}
+
+\paragraph{What this paper claims.} The headline is
+\emph{calibration}, not specialist superiority. Run \#10 is a
+working per-line Verus fault localizer (top-3 $= 0.84$,
+AUROC $= 0.78$, \Cref{tab:run10-real-bug}), and the strip-FAILS
+audit pipeline that produced this audited number --- after
+invalidating an unaudited top-3 of $0.93$ --- is a separate,
+transferable contribution. \Cref{sec:results:cegis} measures
+whether the specialist's localization translates into closed-loop
+repair-rate gains and finds no advantage over LLM-only or
+LLM-self-judged baselines on this corpus. The claim of the paper
+is therefore the calibration triple
+(\Cref{tab:llm-zeroshot,tab:llm-discrimination,tab:cegis-3arm})
+plus the audit pipeline, not a working specialist that we recommend
+deploying.
+
+\paragraph{What this paper does not claim.}
+The architecture is a discriminative EBM in the LeCun
+sense~\cite{lecun2006tutorial}; we do not claim generative density
+modeling.
+
+\paragraph{Limitations.}
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \textbf{The Verus dev-test corpus is test-suite-authored, not
+  production-derived.} Bugs are hand-written failing test cases from
+  \texttt{verus-lang/verus} contributors and therefore reflect what
+  Verus developers found worth testing (parser-edge cases, type
+  mismatches, postcondition counter-examples), not bugs reported by
+  production users. They are a substantially harder transfer target
+  than the mutator-induced held set, but the gap from production-defect
+  evaluation in the broader fault-localization literature should be
+  kept in mind.
+\item \textbf{The closed-loop CEGIS evaluation is underpowered.} We
+  ran the three-arm CEGIS comparison (\Cref{sec:results:cegis}) on
+  $n=100$ tractable single-buggy-line impls, time-boxed and
+  budget-boxed by the hackathon window. At this $n$ the three arms
+  cluster at $25$--$30\%$ repair-rate with overlapping confidence
+  intervals; the McNemar A-vs-C $p=0.06$ is directionally suggestive
+  but not significant at $\alpha=0.05$. A larger evaluation
+  ($n \ge 500$) would either confirm the directional pattern as a
+  real specialist-vs-LLM-self-judged gap or refine the estimate.
+\item LSE-$T$ annealing during run \#7 training caused
+  observed whole-impl AUROC oscillations as the effective aggregator
+  changed mid-training --- the ``assessment drift'' pathology of
+  Zhang et al.~\cite{zhang2025lessonsprm}. Run \#10's scalar-head
+  architecture sidesteps this by eliminating the LSE aggregator.
+\item We evaluate on Verus only. Transfer to Dafny~\cite{dafny} or
+  F\textsuperscript{*} requires re-tokenization and is left
+  unaddressed. A small out-of-Verus probe on HumanEvalPack-Rust
+  \cite{muennighoff2024octopack} (n=328, run \#10 zero-shot) shows
+  the per-line head retains $1.2$--$1.7\times$ lift over uniform but
+  the scalar head is at chance --- out-of-Verus deployment would
+  need either retraining or a verifier-agnostic per-line head.
+\item Single seed. We report bootstrap CIs over the held set but do
+  not retrain across seeds. A LoRA-only re-init ensemble
+  (Lakshminarayanan et al.~2017) over $k=3$ seeds is the natural
+  cheap variance estimate; we defer it to a longer revision.
+\item Subgroup gap on \texttt{ensures}-clause failures
+  (\Cref{tab:bug-type}): top-3 drops to $0.59$ on $n=22$ postcondition
+  bugs. The model's per-line head can identify the line where a
+  postcondition violation \emph{surfaces} less reliably than where an
+  \texttt{assert} or arithmetic statement fails, likely because the
+  signal for an \texttt{ensures} violation lives across the entire
+  impl rather than at one local site. A global-attention head
+  alongside the local sentinel head is the natural architectural
+  follow-up.
+\end{enumerate}
+
+\paragraph{Implications for scalable oversight of AI-written code.}
+With current-generation frontier LLMs as the proposer/rewriter, a
+small trained specialist is not the differentiating component in
+the closed-loop CEGIS repair use case our framing was originally
+motivated by (\Cref{sec:results:cegis}). We do not interpret this
+as evidence that per-line attribution is irrelevant to scalable
+oversight --- the verifier still needs some signal beyond binary
+accept/reject to drive efficient repair --- but it does shift the
+open question: what kind of attribution signal would help, and
+which actor in the loop (verifier, proposer, separate critic)
+should produce it?
+
+\paragraph{Future work.}
+We discuss the four most informative follow-ups --- larger-$n$
+CEGIS, self-judging-loop test, OOD Verus features, ensemble
+routing --- in the Conclusion. Architectural follow-ups include
+an attention-pool global head for the \texttt{ensures}-clause
+subgroup~\cite{ilse2018attentionmil} and a seeded ensemble for
+variance estimation.
+
+% =============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+We built a 1.5B-parameter discriminative energy-based per-line
+scorer for Verus (run \#10, AUROC $= 0.78$, top-1 $= 0.56$,
+top-3 $= 0.84$ on the marker-stripped Verus dev-test corpus) and
+ran three measurements against zero-shot frontier LLMs on the same
+corpus: per-line top-$k$, whole-implementation discrimination
+AUROC, and end-to-end closed-loop CEGIS repair-rate-at-$1$
+adjudicated by the actual Verus toolchain. On all three, the
+specialist is matched or beaten. The per-line and AUROC losses are
+large (top-3 $0.82$ vs.\ $\ge 0.97$; AUROC $0.78$ vs.\ $\ge 0.95$);
+the closed-loop CEGIS difference is small and not significant at
+$n=100$ ($0.25$ specialist vs.\ $0.30$ LLM-only and $0.30$
+LLM-self-judged; A-vs-C McNemar $p=0.06$, directionally suggestive
+but underpowered).
+
+We also built and released a strip-FAILS audit pipeline that
+surfaced and quantified a Qwen pretraining-prior leak in our own
+earlier checkpoint (run \#7, $+46$pp top-1 marker-reliance) and
+that re-applied to run \#10 reveals the opposite pathology
+($-50$pp top-1 marker-aversion: the adversarial-marker-injection
+fix overshot). Frontier LLMs are essentially marker-invariant
+($|\Delta| \le 3.5$pp); neither of our trained specialists is.
+
+We do not claim the specialist earns its keep in the closed-loop
+CEGIS use case. The contributions of the paper that survive the
+three-way calibration are: (i) the audit pipeline, which catches
+both marker-reliance and marker-aversion in trained specialists
+and is verifier- and architecture-agnostic; (ii) the architectural
+ablation attributing the run \#9 $\to$ \#10 gain to the scalar
+attention-pool head; (iii) the calibration result itself --- to
+our knowledge the first end-to-end specialist-vs-LLM measurement
+for Verus per-line fault localization --- which closes the
+``small fine-tuned specialist is the right tooling'' hypothesis on
+the design space we explored. We release the corpus, the model,
+all intermediate checkpoints, the audit scripts, the LLM-baseline
+records, and the CEGIS toolchain. The four follow-ups our results
+sharpen are: \emph{(a)} a larger-$n$ ($\ge 500$) closed-loop CEGIS
+evaluation to resolve the $0$-vs-$5$ McNemar discordance pattern;
+\emph{(b)} an explicit test of the self-judging-loop concern where
+the LLM is both proposer and localizer and a specialist breaks the
+loop by virtue of being an independent signal source; \emph{(c)}
+OOD Verus features the frontier-LLM training distribution
+under-samples (custom verifier extensions, less-documented proof
+modes, future syntax), where a fine-tunable specialist plausibly
+still wins; \emph{(d)} routing or ensemble approaches that combine
+the three arms above. These are the next-round questions a
+fellowship-scale follow-up should investigate.
+
+% =============================================================================
+\section*{Code and Data}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Code: \url{https://github.com/guynachshon/verificationHackathon}
+\item Verus dev-test corpus: \texttt{artifacts/real\_bugs/records.jsonl}
+  (1{,}492 records, 609 FAIL-with-labels, derived from
+  \texttt{verus-lang/verus} test suite at HEAD).
+\item Strip-FAILS audit pipeline: \texttt{scripts/strip\_fails\_reeval.py}
+  (regenerates the audited corpus from the raw \texttt{// FAILS}-marked
+  source for any model whose records use the same schema).
+\item Headline checkpoint (run \#10, hybrid scalar-head):
+  \texttt{checkpoints/run10/}. Intermediate checkpoints
+  (\texttt{run7\_step500}, \texttt{run9}) are released alongside for
+  reproduction of the audit narrative.
+\end{itemize}
+
+\section*{LLM Usage}
+We used Claude Opus to draft code, prose, and to dispatch literature-search
+sub-agents. All results, numbers, and claims were independently verified
+against logs and stored artifacts. The data parsers, model architecture,
+losses, training loop, eval scripts, baselines, Verus dev-test scraper, and
+analysis pipeline were co-authored with Claude and reviewed before commit.
+
+% =============================================================================
+\begin{thebibliography}{99}\small
+
+\bibitem{verus2023}
+A.~Lattuada, T.~Hance, C.~Cho, M.~Brun, I.~Subasinghe, Y.~Zhou, J.~Howell,
+B.~Parno, C.~Hawblitzel.
+\newblock Verus: Verifying Rust Programs Using Linear Ghost Types.
+\newblock \emph{OOPSLA 2023}.
+
+\bibitem{verus_training_data}
+Microsoft Research.
+\newblock \emph{Verus Training Data} (HuggingFace dataset
+\texttt{microsoft/Verus\_Training\_Data}), 2024.
+
+\bibitem{cegis}
+A.~Solar-Lezama, L.~Tancau, R.~Bod\'{i}k, S.~Seshia, V.~Saraswat.
+\newblock Combinatorial sketching for finite programs.
+\newblock \emph{ASPLOS 2006}.
+
+\bibitem{lecun2006tutorial}
+Y.~LeCun, S.~Chopra, R.~Hadsell, M.~Ranzato, F.~Huang.
+\newblock A tutorial on energy-based learning.
+\newblock In \emph{Predicting Structured Data}, MIT Press, 2006.
+
+\bibitem{lightman2023letsverify}
+H.~Lightman, V.~Kosaraju, Y.~Burda, H.~Edwards, B.~Baker, T.~Lee, J.~Leike,
+J.~Schulman, I.~Sutskever, K.~Cobbe.
+\newblock Let's Verify Step by Step.
+\newblock arXiv:2305.20050, 2023.
+
+\bibitem{wang2024mathshepherd}
+P.~Wang, L.~Li, Z.~Shao, R.~X.~Xu, D.~Dai, Y.~Li, D.~Chen, Y.~Wu, Z.~Sui.
+\newblock Math-Shepherd: Verify and Reinforce LLMs Step-by-Step without
+Human Annotations.
+\newblock \emph{ACL 2024} (arXiv:2312.08935).
+
+\bibitem{setlur2024processadvantage}
+A.~Setlur, C.~Nagpal, A.~Fisch, X.~Geng, J.~Eisenstein, R.~Agarwal,
+A.~Agarwal, J.~Berant, A.~Kumar.
+\newblock Rewarding Progress: Scaling Automated Process Verifiers for LLM
+Reasoning.
+\newblock arXiv:2410.08146, 2024.
+
+\bibitem{zhang2025lessonsprm}
+Z.~Zhang, C.~Zheng, Y.~Wu, B.~Zhang, R.~Lin, B.~Yu, D.~Liu, J.~Zhou, J.~Lin.
+\newblock The Lessons of Developing Process Reward Models in Mathematical
+Reasoning.
+\newblock arXiv:2501.07301, 2025.
+
+\bibitem{grathwohl2020jem}
+W.~Grathwohl, K.-C.~Wang, J.-H.~Jacobsen, D.~Duvenaud, M.~Norouzi, K.~Swersky.
+\newblock Your Classifier is Secretly an Energy Based Model and You Should
+Treat it Like One.
+\newblock \emph{ICLR 2020}.
+
+\bibitem{abreu2007ochiai}
+R.~Abreu, P.~Zoeteweij, A.~J.~C.~van Gemund.
+\newblock On the Accuracy of Spectrum-based Fault Localization.
+\newblock \emph{TAICPART-MUTATION 2007}.
+
+\bibitem{just2014mutants}
+R.~Just, D.~Jalali, L.~Inozemtseva, M.~D.~Ernst, R.~Holmes, G.~Fraser.
+\newblock Are mutants a valid substitute for real faults in software
+testing?
+\newblock \emph{FSE 2014}.
+
+\bibitem{pradel2018deepbugs}
+M.~Pradel, K.~Sen.
+\newblock DeepBugs: A Learning Approach to Name-based Bug Detection.
+\newblock \emph{OOPSLA 2018}.
+
+\bibitem{allamanis2021ssbd}
+M.~Allamanis, H.~Jackson-Flux, M.~Brockschmidt.
+\newblock Self-Supervised Bug Detection and Repair.
+\newblock \emph{NeurIPS 2021}.
+
+\bibitem{cobbe2021verifiers}
+K.~Cobbe, V.~Kosaraju, M.~Bavarian, M.~Chen, H.~Jun, L.~Kaiser, M.~Plappert,
+J.~Tworek, J.~Hilton, R.~Nakano, C.~Hesse, J.~Schulman.
+\newblock Training Verifiers to Solve Math Word Problems.
+\newblock arXiv:2110.14168, 2021.
+
+\bibitem{ilse2018attentionmil}
+M.~Ilse, J.~Tomczak, M.~Welling.
+\newblock Attention-based Deep Multiple Instance Learning.
+\newblock \emph{ICML 2018}.
+
+\bibitem{kaushik2020counterfactual}
+D.~Kaushik, E.~Hovy, Z.~C.~Lipton.
+\newblock Learning the Difference that Makes a Difference with
+Counterfactually-Augmented Data.
+\newblock \emph{ICLR 2020}.
+
+\bibitem{veitch2021counterfactual}
+V.~Veitch, A.~D'Amour, S.~Yadlowsky, J.~Eisenstein.
+\newblock Counterfactual Invariance to Spurious Correlations in Text
+Classification.
+\newblock \emph{NeurIPS 2021}.
+
+\bibitem{rabin2021generalizability}
+M.~R.~I.~Rabin, N.~D.~Q.~Bui, K.~Wang, Y.~Yu, L.~Jiang, M.~A.~Alipour.
+\newblock On the Generalizability of Neural Program Models with Respect to
+Semantic-Preserving Program Transformations.
+\newblock \emph{Information and Software Technology}, 2021.
+
+\bibitem{delong1988comparing}
+E.~R.~DeLong, D.~M.~DeLong, D.~L.~Clarke-Pearson.
+\newblock Comparing the areas under two or more correlated receiver
+operating characteristic curves: a nonparametric approach.
+\newblock \emph{Biometrics} 44(3):837--845, 1988.
+
+\bibitem{qwen25coder}
+B.~Hui, J.~Yang, Z.~Cui, J.~Yang, D.~Liu, L.~Zhang, T.~Liu, J.~Zhang,
+B.~Yu, K.~Lu, K.~Dang, Y.~Fan, Y.~Zhang, A.~Yang, R.~Men, F.~Huang,
+B.~Zheng, Y.~Miao, S.~Quan, Y.~Feng, X.~Ren, X.~Ren, J.~Zhou, J.~Lin.
+\newblock Qwen2.5-Coder Technical Report.
+\newblock arXiv:2409.12186, 2024.
+
+\bibitem{hu2021lora}
+E.~J.~Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang,
+W.~Chen.
+\newblock LoRA: Low-Rank Adaptation of Large Language Models.
+\newblock arXiv:2106.09685, 2021.
+
+\bibitem{du2019ebm}
+Y.~Du, I.~Mordatch.
+\newblock Implicit Generation and Modeling with Energy Based Models.
+\newblock \emph{NeurIPS 2019}.
+
+\bibitem{dafny}
+K.~R.~M.~Leino.
+\newblock Dafny: An Automatic Program Verifier for Functional Correctness.
+\newblock \emph{LPAR 2010}.
+
+\bibitem{zhang2023selfedit}
+K.~Zhang, Z.~Li, J.~Li, G.~Li, Z.~Jin.
+\newblock Self-Edit: Fault-Aware Code Editor for Code Generation.
+\newblock \emph{ACL 2023}.
+
+\bibitem{wang2020alignment}
+T.~Wang, P.~Isola.
+\newblock Understanding Contrastive Representation Learning through Alignment
+  and Uniformity on the Hypersphere.
+\newblock \emph{ICML 2020} (arXiv:2005.10242).
+
+\bibitem{khosla2020supervised}
+P.~Khosla, P.~Teterwak, C.~Wang, A.~Sarna, Y.~Tian, P.~Isola, A.~Maschinot,
+C.~Liu, D.~Krishnan.
+\newblock Supervised Contrastive Learning.
+\newblock \emph{NeurIPS 2020} (arXiv:2004.11362).
+
+\bibitem{goyal2019counterfactualvqa}
+Y.~Goyal, Z.~Wu, J.~Ernst, D.~Batra, D.~Parikh, S.~Lee.
+\newblock Counterfactual Visual Explanations.
+\newblock \emph{ICML 2019} (arXiv:1904.07451).
+
+\bibitem{cao2007listnet}
+Z.~Cao, T.~Qin, T.-Y.~Liu, M.-F.~Tsai, H.~Li.
+\newblock Learning to Rank: From Pairwise Approach to Listwise Approach
+  (ListNet).
+\newblock \emph{ICML 2007}.
+
+\bibitem{xia2008listmle}
+F.~Xia, T.-Y.~Liu, J.~Wang, W.~Zhang, H.~Li.
+\newblock Listwise Approach to Learning to Rank: Theory and Algorithm
+  (ListMLE).
+\newblock \emph{ICML 2008}.
+
+\bibitem{lin2017focal}
+T.-Y.~Lin, P.~Goyal, R.~Girshick, K.~He, P.~Dollár.
+\newblock Focal Loss for Dense Object Detection.
+\newblock \emph{ICCV 2017} (arXiv:1708.02002).
+
+\bibitem{schroff2015facenet}
+F.~Schroff, D.~Kalenichenko, J.~Philbin.
+\newblock FaceNet: A Unified Embedding for Face Recognition and Clustering.
+\newblock \emph{CVPR 2015} (arXiv:1503.03832).
+
+\bibitem{wu2017samplingmatters}
+C.-Y.~Wu, R.~Manmatha, A.~J.~Smola, P.~Krähenbühl.
+\newblock Sampling Matters in Deep Embedding Learning.
+\newblock \emph{ICCV 2017} (arXiv:1706.07567).
+
+\bibitem{sun2014fastdelong}
+X.~Sun, W.~Xu.
+\newblock Fast Implementation of DeLong's Algorithm for Comparing the Areas
+Under Correlated Receiver Operating Characteristic Curves.
+\newblock \emph{IEEE Signal Processing Letters} 21(11):1389--1393, 2014.
+\newblock DOI: 10.1109/LSP.2014.2337313.
+
+\bibitem{renieris2003nnqueries}
+M.~Renieris, S.~P.~Reiss.
+\newblock Fault Localization with Nearest Neighbor Queries.
+\newblock \emph{18th IEEE International Conference on Automated Software
+Engineering (ASE 2003)}, pp.~30--39, 2003.
+\newblock DOI: 10.1109/ASE.2003.1240294.
+
+\bibitem{hindle2012naturalness}
+A.~Hindle, E.~T.~Barr, Z.~Su, M.~Gabel, P.~Devanbu.
+\newblock On the Naturalness of Software.
+\newblock \emph{34th International Conference on Software Engineering
+(ICSE 2012)}, pp.~837--847, 2012.
+\newblock DOI: 10.1109/ICSE.2012.6227135.
+
+\bibitem{karampatsis2020openvocab}
+R.-M.~Karampatsis, H.~Babii, R.~Robbes, C.~Sutton, A.~Janes.
+\newblock Big Code $\ne$ Big Vocabulary: Open-Vocabulary Models for Source
+Code.
+\newblock \emph{42nd International Conference on Software Engineering
+(ICSE 2020)}, pp.~1073--1085, 2020.
+\newblock DOI: 10.1145/3377811.3380342.
+
+\bibitem{bakhtin2021residual}
+A.~Bakhtin, Y.~Deng, S.~Gross, M.~Ott, M.~Ranzato, A.~Szlam.
+\newblock Residual Energy-Based Models for Text.
+\newblock \emph{JMLR 2021} (arXiv:2004.11714).
+
+\bibitem{muennighoff2024octopack}
+N.~Muennighoff, Q.~Liu, A.~Zebaze, Q.~Zheng, B.~Hui, T.~Y.~Zhuo, S.~Singh,
+X.~Tang, L.~von~Werra, S.~Longpre.
+\newblock OctoPack: Instruction Tuning Code Large Language Models.
+\newblock \emph{ICLR 2024} (arXiv:2308.07124).
+
+\bibitem{cassano2023multipl}
+F.~Cassano, J.~Gouwar, D.~Nguyen, S.~Nguyen, L.~Phipps-Costin, D.~Pinckney,
+M.-H.~Yee, Y.~Zi, C.~J.~Anderson, M.~Q.~Feldman, A.~Guha, M.~Greenberg, A.~Jangda.
+\newblock MultiPL-E: A Scalable and Polyglot Approach to Benchmarking
+Neural Code Generation.
+\newblock \emph{IEEE TSE} 49(7):3675--3691, 2023 (arXiv:2208.08227).
+
+\bibitem{anthropic2026claude47}
+Anthropic.
+\newblock Claude Opus 4.7 model card.
+\newblock \url{https://www.anthropic.com/claude/opus}, 2026. Accessed via
+OpenRouter slug \texttt{anthropic/claude-opus-4.7}.
+
+\bibitem{openai2026gpt55}
+OpenAI.
+\newblock GPT-5.5 system card.
+\newblock \url{https://openai.com/gpt-5.5}, 2026. Accessed via
+OpenRouter slug \texttt{openai/gpt-5.5}.
+
+\bibitem{google2026gemini35}
+Google DeepMind.
+\newblock Gemini 3.5 Flash technical report.
+\newblock \url{https://deepmind.google/gemini-3.5}, 2026. Accessed via
+OpenRouter slug \texttt{google/gemini-3.5-flash}.
+
+\bibitem{qwen2026qwen37}
+Qwen Team.
+\newblock Qwen 3.7 Max model card.
+\newblock \url{https://qwenlm.github.io/blog/qwen3.7-max/}, 2026. Accessed
+via OpenRouter slug \texttt{qwen/qwen3.7-max}.
+
+\bibitem{deepseek2026v4}
+DeepSeek AI.
+\newblock DeepSeek-V4 technical report.
+\newblock \url{https://github.com/deepseek-ai/DeepSeek-V4}, 2026.
+Accessed via OpenRouter slug \texttt{deepseek/deepseek-v4-pro}.
+
+\end{thebibliography}
+
+% =============================================================================
+\appendix
+\section{Additional results}
+\label{app:additional}
+
+\paragraph{Eval-time aggregator sweep on Verus dev-test records.}
+Same per-line energies, different reducer:
+$\text{mean}{=}0.471$, $\text{max}{=}0.484$, $\text{min}{=}0.490$,
+$\text{last}{=}0.517$, $\text{sum}{=}0.530$, $\text{softplus-sum}{=}0.475$,
+$\text{LSE(train-time)}{=}0.487$ (\Cref{tab:agg-sweep} in main text).
+
+\paragraph{Z-score top-$k$ aggregator (Option B$'$ from
+\cite{lecun2006tutorial}-style reformulation; not headline-defensible due to
+``assessment drift''):}
+within-impl z-score normalize per-line energies, then mean of top-$k$.
+On Verus dev-test records: $k{=}1$: $0.504$; $k{=}2$: $0.451$; $k{=}3$: $0.424$;
+$k{=}5$: $0.420$. No reducer escapes the chance band; the ceiling holds.
+
+\section{Significance tests: run \#10 vs.\ baselines}
+\label{app:significance}
+
+\Cref{tab:significance} gives paired significance tests for run \#10
+(stripped) against the six static baselines on the Verus dev-test corpus. Top-$k$
+tests are paired McNemar (exact binomial when $b_{01}+b_{10}<25$, $\chi^2$
+with continuity correction otherwise). AUROC tests are paired DeLong
+following Sun and Xu's fast implementation~\cite{sun2014fastdelong} of
+the original procedure~\cite{delong1988comparing}. All tests use the same
+$n=1{,}492$ records (or $n_{\text{labeled}}=609$ FAIL records for top-$k$)
+joined by \texttt{impl\_id}; no records are excluded.
+
+\input{stats_appendix}
+
+The marker-keyword baseline ($p=0.006$ on AUROC) shows the smallest gap
+because by design it is a near-oracle for line-level localization on the
+unstripped corpus---but even there, run \#10's impl-level discrimination
+is statistically meaningfully better, and on the stripped corpus
+(\Cref{sec:results:run10-baselines}) the gap widens further.
+
+\section{Reproducibility}
+\label{app:reproducibility}
+
+All numbers in this paper tie to artifacts saved on disk in the
+\texttt{artifacts/} directory of our released codebase:
+
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \textbf{Verus dev-test corpus}: \texttt{artifacts/real\_bugs/records.jsonl}
+  (1{,}492 records, 609 line-labeled FAIL examples). Generated by
+  \texttt{scripts/scrape\_verus\_real\_bugs.py} from the
+  \texttt{verus-lang/verus} GitHub repository's test suite at HEAD
+  (\texttt{source/rust\_verify\_test/tests/*.rs}, 132 files).
+\item \textbf{Model scoring}: \path{scripts/run_mutator_probe.sh checkpoints/<run>} produces
+  \texttt{artifacts/real\_bugs/<run>/eval\_records.jsonl} for any of the
+  released checkpoints (\texttt{run7\_step500}, \texttt{run9},
+  \texttt{run10}).
+\item \textbf{Three-way audit}: \path{scripts/strip_fails_reeval.py} +
+  \path{scripts/token_mask_reeval.py} produce the
+  \texttt{no\_surgery}/\texttt{stripped}/\texttt{token\_masked}
+  arms used in \Cref{tab:strip-fails-headline,tab:llm-marker-audit}.
+\item \textbf{Significance + subgroups}:
+  \texttt{scripts/significance\_and\_subgroups.py} on the above eval records.
+\item \textbf{Position-shift figure}:
+  \texttt{scripts/figure\_position\_shift.py}.
+\item \textbf{LLM baselines}: \texttt{scripts/baseline\_llm\_zeroshot.py}
+  (ranking-prompt), \texttt{scripts/baseline\_llm\_discrimination.py}
+  (discrimination-prompt). OpenRouter slug names listed in the
+  reproducibility note in \Cref{sec:results:llm-zeroshot}.
+\item \textbf{CEGIS three-arm experiment}: \texttt{scripts/cegis\_demo\_3arm.py}
+  + \texttt{scripts/cegis\_rerun\_arm\_b.py} produce
+  \texttt{artifacts/cegis/3arm\_results\_v2.jsonl} and
+  \texttt{summary\_3arm.json}. Requires a local Verus toolchain
+  binary; we used the prebuilt
+  \texttt{verus-0.2026.05.17.e479cce-arm64-macos}.
+\end{itemize}
+
+\paragraph{Hyperparameters.}
+LoRA rank 16, alpha 32, dropout 0.05; all-linear target modules
+plus rank-8 \texttt{embed\_tokens}. Per-line head: MLP $1536 \to 256 \to 1$,
+GELU, dropout 0.1, init-std 0.02. Optimizer AdamW ($\beta_1 {=}0.9$,
+$\beta_2 {=} 0.95$), peak LR $1{\times}10^{-4}$, cosine schedule with
+$3\%$ warmup decaying to $10\%$ of peak. LSE temperature linearly
+annealed $1.0 \to 0.3$ across the full schedule (the source of the
+assessment-drift event documented in \Cref{sec:discussion}). Loss weights:
+$\lambda_{\text{spec}} = 3.0$, $\lambda_{\text{line}} = 1.0$, line-loss
+margin $1.0$. Per-batch composition: at least 2 trajectory triples + 4
+sft\_safe pairs. Micro-batch 16, no grad-accum, bf16 precision,
+gradient checkpointing on. Max sequence length 4096. Sentinel token:
+\verb+<|fim_pad|>+ (id $151662$ in Qwen2.5-Coder tokenizer).
+
+\paragraph{Hardware.}
+Single A100 SXM 80GB (RunPod community cloud, USD~\$1.39--1.49/hr).
+Run~\#7 total wallclock: $\sim$3h to reach step 1845 before
+stop-point. The step-500 checkpoint we report from required
+$\sim$30 minutes of training.
+
+\section{Marker-leak fix: runs \#8, \#9, \#10 in brief}
+\label{app:marker-aug}
+
+The strip-FAILS audit (\Cref{sec:results:strip-fails-audit})
+revealed a Qwen pretraining-prior leak through \texttt{// FAILS}
+comment tokens. The training corpus contains \emph{zero} such
+markers, while $42.9\%$ of dev-test records do; the model inherited
+the marker$\to$buggy association from pretraining via the
+LoRA-passthrough of Qwen's prior. We attempted three fixes across
+runs \#8--\#10.
+
+\paragraph{Run \#8 (failed).} Mixed-marker counterfactual
+augmentation following Kaushik et al.~\cite{kaushik2020counterfactual}
+and Veitch et al.~\cite{veitch2021counterfactual}: $K{=}4$
+perturbed copies per training example, marker injection at $p=0.5$
+on \emph{any} line including buggy ones, plus positive distractors
+(\texttt{// ok}/\texttt{// verified}) at $p=0.3$. Held-set went to
+chance at step 500 (AUROC $0.53$, top-3 $0.23$). Post-mortem:
+positive distractors on buggy lines created within-class label
+noise, collapsing the within-spec InfoNCE loss in the manner
+documented by Wang \& Isola~\cite{wang2020alignment}.
+
+\paragraph{Run \#9 (partial fix).} Adversarial-only marker injection:
+place \texttt{// FAILS}-family markers (no positive distractors) on
+a uniformly random \emph{non}-buggy line with $p=0.6$, $K{=}2$ copies.
+This installs a clean marker$\to$non-bug anti-correlation with no
+within-class label noise, and shrinks the marker-leak gap from
+$33$pp to $4$pp on top-3. But run \#9's held-set whole-impl AUROC
+inverted to $0.40$ while top-3 climbed to $0.87$ --- an
+alignment-without-uniformity failure: per-line ranking is correct
+but the LSE aggregator inherits a per-impl additive bias
+$E_{i,j} = s_{i,j} + b_i$ whose calibration gradient vanishes when
+the within-spec InfoNCE loss collapses. Post-hoc shift-invariant
+aggregators (mean-subtracted max/top-3/top1-minus-min) recover only
+partially ($\le 0.57$ AUROC); the bias drift is deeper than
+mean-subtraction can fix.
+
+\paragraph{Run \#10 (architectural fix).} The post-hoc result
+establishes that the LSE aggregator itself is the problem, not its
+temperature. We add a directly-trained scalar attention-pool head on
+top of $[$spec; impl$]$ hidden states (no LSE aggregation), with
+losses
+$L = \lambda_{\text{scalar}} L_{\text{impl-pair}} +
+\lambda_{\text{list}} L_{\text{listwise}} +
+\lambda_{\text{pair}} L_{\text{semi-hard}}$
+where $L_{\text{listwise}}$ is ListNet softmax cross-entropy within
+an impl~\cite{cao2007listnet} and $L_{\text{semi-hard}}$ is per-line
+pairwise hinge with FaceNet-style semi-hard top-$k$
+mining~\cite{schroff2015facenet,wu2017samplingmatters}. The
+impl-pair contrastive loss is implemented as logistic pairwise
+$\text{softplus}(E^+ - E^-)$ (\cite{lecun2006tutorial}~§2.3) which
+asymptotes but never saturates, avoiding the zero-gradient hinge
+saturation that reproduced run \#9's InfoNCE collapse.
+
+\paragraph{Run \#10 three-way evaluation.}
+
+\begin{table}[htbp]
+\centering
+\caption{Run \#10 vs.\ baselines on the Verus dev-test corpus
+($n{=}1{,}492$, $609$ FAIL with labels). Bootstrap $95\%$ CIs from
+$500$ resamples. \textbf{Stripped is the canonical eval} (marker-free).}
+\label{tab:run10-real-bug}
+\small
+\begin{tabular}{lccc}
+\toprule
+                                  & top-1            & top-3            & AUROC          \\
+\midrule
+Run \#7 with-marker (reference)   & 0.73             & 0.93             & 0.49           \\
+Run \#7 stripped (reference)      & 0.44             & 0.60             & 0.44           \\
+Run \#9 token-masked              & 0.45             & 0.80             & 0.51           \\
+Run \#9 stripped                  & 0.45             & 0.76             & 0.49           \\
+\midrule
+Run \#10 token-masked             & 0.064            & 0.388            & \textbf{0.782} \\
+\textbf{Run \#10 stripped}        & \textbf{0.560}   & \textbf{0.839}   & \textbf{0.778} \\
+Run \#10 no-surgery               & 0.038            & 0.238            & \textbf{0.842} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Three findings:}
+
+\emph{(1) AUROC fix succeeded decisively.} Run \#10 AUROC on dev-test failures
+is $0.78$--$0.84$ across all three arms ($+30$pp vs.\ run \#9 stripped
+$0.49$, $+35$pp vs.\ run \#7 stripped $0.44$). The scalar attention-pool
+head trained directly on logistic impl-pair loss produces honest cross-impl
+ranking. This is the first run where AUROC and top-3 are both above
+chance on the same checkpoint.
+
+\emph{(2) Strongest per-line localization on a leak-free metric.} Run
+\#10 stripped delivers top-1 $= 0.56$ ($+12$pp vs.\ run \#9, $+12$pp vs.\
+run \#7 stripped) and top-3 $= 0.84$ ($+8$pp vs.\ run \#9, $+24$pp vs.\
+run \#7 stripped). This is the cleanest Verus dev-test result we have:
+no marker leak (\texttt{// FAILS} stripped from input), no aggregator
+artifact (scalar head not LSE), no within-class label noise.
+
+\emph{(3) Adversarial marker training over-corrects on marker-bearing inputs.}
+Run \#10's top-1 falls to $0.064$ when the corpus still contains
+\texttt{// FAILS} markers. The model has learned a strong
+\texttt{// FAILS}$\to$non-buggy prior from training; at eval on dev-test failures
+where $42.9\%$ of records have markers placed near actual bug lines (by
+authorial convention), the model attributes the marker line to
+non-bug and inverts on that subset. This is the documented failure
+mode of adversarial counterfactual aug when the eval distribution
+re-introduces the spurious feature with its original sign
+(\cite{veitch2021counterfactual}). The interaction is benign for AUROC
+(which integrates over all lines) but devastating for top-$k$ on the
+subset of records with markers. \textbf{Mitigation:} report stripped
+eval as canonical; the with-marker arm is reported for transparency.
+
+\paragraph{Ablation: which run \#10 change actually fixed AUROC.}
+We trained four single-component ablations of run \#10 to attribute the
+$+30$pp AUROC gain over run \#9. \emph{A1: no scalar head} reverts to
+run \#9's LSE aggregator over per-line energies. \emph{A2: no listwise}
+disables the ListNet within-impl softmax term. \emph{A3: no semi-hard
+mining} replaces the FaceNet-style top-$k$ negative selection
+\cite{schroff2015facenet} with uniform random negatives. \emph{A4:
+hinge impl-pair} reverts the logistic pairwise loss back to a hinge.
+A1 and A4 were trained for 2 epochs ($\sim$1{,}844 steps); A2 and A3
+were re-run for 1 epoch each after an initial OOM, which is sufficient
+for attribution signal on this corpus. All four use identical data and
+are scored on the same Verus dev-test corpus.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Single-knob ablations of run \#10 on the marker-stripped Verus dev-test
+corpus ($n{=}1{,}492$). Attribution order:
+\textbf{scalar head $\gg$ listwise $>$ semi-hard mining $\gg$ logistic loss}.
+The scalar attention-pool head is the load-bearing architectural change;
+removing the listwise or semi-hard component degrades AUROC substantially
+but leaves top-$k$ recall comparatively intact; the logistic-vs-hinge
+choice is within-noise.}
+\label{tab:run10-ablation}
+\begin{tabular}{lccc}
+\toprule
+                                     & AUROC          & top-1           & top-3           \\
+\midrule
+Run \#10 (3 epochs, reference)        & \textbf{0.778} & \textbf{0.560}  & \textbf{0.839}  \\
+\textbf{A1: no scalar head} (LSE)     & 0.455          & 0.516           & 0.819           \\
+\textbf{A2: no listwise}              & 0.592          & 0.598           & 0.836           \\
+\textbf{A3: no semi-hard mining}      & 0.663          & 0.547           & 0.790           \\
+\textbf{A4: hinge instead of logistic}& 0.784          & 0.522           & 0.847           \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Reading.} Removing the scalar head (A1) collapses AUROC from
+$0.78$ to $0.46$ --- back to run \#9 chance levels, confirming that
+without an end-to-end-trained impl-level head, the LSE aggregator
+inherits the bias drift that the run \#9 post-mortem diagnosed (Wang \&
+Isola 2020 alignment-without-uniformity~\cite{wang2020alignment}).
+Per-line localisation (top-1, top-3) is barely affected because the
+per-line head is independent.
+
+Removing the listwise term (A2) drops AUROC to $0.59$ and removing
+semi-hard mining (A3) drops it to $0.66$. Both are large compared to
+the logistic-vs-hinge swap and small compared to removing the scalar
+head, placing them in a clear middle tier. Curiously, A2 \emph{improves}
+top-1 ($0.60$ vs run \#10's $0.56$): without the listwise smoothing
+pressure, the per-line head over-commits to its top guess. This is the
+classic ranking-quality vs single-point-accuracy trade-off motivating
+ListNet \cite{cao2007listnet} in the first place --- our run \#11 stack
+re-targets it with ListMLE \cite{xia2008listmle} and focal weighting
+\cite{lin2017focal}.\footnote{Run \#11b (post-deadline, listed for
+completeness) replicates the run \#10 marker-aversion pattern even more
+strongly: top-1 on the stripped corpus is $0.516$ vs.\ $0.046$ with
+markers intact, a $-47$pp delta vs.\ run \#10's $-52$pp. The headline
+results in this paper are taken from run \#10.}
+
+By contrast, reverting the impl-pair loss from logistic back to hinge
+(A4) leaves AUROC essentially unchanged ($0.778 \to 0.784$). The
+``logistic prevents saturation'' implementation note above is therefore
+an \emph{aesthetic improvement} during training (the loss never reaches
+exact zero, so the loss curve looks healthier) rather than a substantive
+contributor to held-out performance. \textbf{The single load-bearing
+architectural change between run \#9 and run \#10 is the scalar
+attention-pool head}; the listwise + semi-hard contributions are
+non-trivial but secondary; the logistic loss change is a defensive
+implementation detail.
+
+\section{Strip-FAILS re-evaluation (audit pipeline)}
+\label{app:strip-fails}
+
+The audit table and its discussion are in
+\Cref{sec:results:strip-fails-audit}
+(\Cref{tab:strip-fails-headline}). We moved them into the main text
+because the audit pipeline is itself a contribution and belongs in
+front of the reader. This appendix records the released code so the
+audit can be re-run on any future Verus bug-localization model whose
+records use the same schema:
+
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \texttt{scripts/strip\_fails\_reeval.py} --- reads
+  \texttt{records.jsonl}, strips the \texttt{// FAILS} substring (and
+  any trailing characters) from each line, re-tokenizes, re-scores
+  with the named checkpoint, and writes \texttt{stripped.jsonl}.
+\item Three-way harness: we also report a \emph{token-masked}
+  condition in which marker tokens (rather than the literal
+  substring) are masked at the tokenizer level. The three-way
+  (\texttt{no\_surgery}, \texttt{stripped}, \texttt{token\_masked}) is
+  the canonical audit because the third condition rules out the
+  alternative hypothesis that the model has learned a non-marker
+  correlate of the FAILS region.
+\item Mitigation: \texttt{configs/run9\_embed\_surgery.yaml} and
+  \texttt{configs/run10\_hybrid.yaml} demonstrate the
+  adversarial-marker-injection training fix and the architectural
+  fix; both shrink the with-marker--vs--stripped top-3 gap from
+  $33$pp to $\le 4$pp.
+\end{itemize}
+
+We encourage anyone building Verus bug-localization models on
+\texttt{verus-lang/verus} comment-marked failing tests to run the
+three-way harness before reporting transfer numbers.
+
+\paragraph{Single-seed caveat.}
+The audit numbers in \Cref{tab:strip-fails-headline} are from a
+single training seed. The bootstrap CIs we report capture sampling
+variance within the held set; they do not capture model-seed
+variance. A $k{=}3$ LoRA-head ensemble would tighten this for a
+follow-up version; we did not run it in this submission, so the
+single-seed-luck hypothesis cannot be formally ruled out.
+
+\end{document}

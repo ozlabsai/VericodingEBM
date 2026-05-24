@@ -1,0 +1,42 @@
+loaded 1492 records
+
+[E0] n=1492 pass=76 fail=1416
+  AUROC (whole-impl aggregator) = 0.8423
+  top-1 recall = 0.0378  (uniform = 0.1312, lift = 0.29x, n=609)
+  top-3 recall = 0.2381  (uniform = 0.3811, lift = 0.62x, n=609)
+  top-5 recall = 0.5008  (uniform = 0.5657, lift = 0.89x, n=609)
+
+[A3] aggregator sweep (same per-line energies, different whole-impl reducer)
+  mean          : AUROC = 0.2954
+  max           : AUROC = 0.2913
+  min           : AUROC = 0.4551
+  last          : AUROC = 0.3513
+  sum           : AUROC = 0.5604
+  softplus_sum  : AUROC = 0.3004
+  ms_max        : AUROC = 0.3379
+  ms_top3       : AUROC = 0.3186
+  ms_top1_minus_min: AUROC = 0.3106
+
+[E3] z-score within-impl + top-k mean aggregator
+  k=1: AUROC = 0.4594
+  k=2: AUROC = 0.4222
+  k=3: AUROC = 0.4042
+  k=5: AUROC = 0.4095
+  max (raw, no z): AUROC = 0.2913
+
+[E2] bootstrap CIs (iters=500)
+  AUROC: median=0.8437 95% CI=[0.7998, 0.8866]
+  top1: median=0.0374 95% CI=[0.0234, 0.0541]
+  top3: median=0.2368 95% CI=[0.2016, 0.2710]
+
+[Triv] per-line energy vs line-position; buggy-line position distribution
+  buggy-line position: median=0.74 Q25=0.50 Q75=0.88 n=960
+  pred-top1 position:  median=0.50 Q25=0.12 Q75=0.80 n=609
+  Spearman(per-line-energy, position) per-impl mean = -0.0778 (|.| < 0.2 desired)
+
+[Baseline] line-length: rank lines by character count desc, then top-k recall
+  top-1: ours=0.0378  length-baseline=0.3826  uniform=0.1312  (n=609)
+  top-3: ours=0.2381  length-baseline=0.7274  uniform=0.3811  (n=609)
+
+[R3] split by source
+  verus_real           n= 1492 pass=   76 fail= 1416 AUROC=0.8423 top3=0.2381 (n_line=609)

@@ -1,0 +1,47 @@
+[
+  {
+    "label": "claude-opus-4.7",
+    "slug": "anthropic/claude-opus-4.7",
+    "n_done": 220,
+    "n_failed": 0,
+    "tokens_in": 133938,
+    "tokens_out": 7746,
+    "out": "artifacts/baselines/llm/llm_claude-opus-4.7_records.jsonl"
+  },
+  {
+    "label": "deepseek-v4-pro",
+    "slug": "deepseek/deepseek-v4-pro",
+    "n_done": 220,
+    "n_failed": 90,
+    "tokens_in": 52484,
+    "tokens_out": 225552,
+    "out": "artifacts/baselines/llm/llm_deepseek-v4-pro_records.jsonl"
+  },
+  {
+    "label": "qwen3.7-max",
+    "slug": "qwen/qwen3.7-max",
+    "n_done": 220,
+    "n_failed": 0,
+    "tokens_in": 102757,
+    "tokens_out": 93574,
+    "out": "artifacts/baselines/llm/llm_qwen3.7-max_records.jsonl"
+  },
+  {
+    "label": "gpt-5.5",
+    "slug": "openai/gpt-5.5",
+    "n_done": 220,
+    "n_failed": 24,
+    "tokens_in": 76148,
+    "tokens_out": 85540,
+    "out": "artifacts/baselines/llm/llm_gpt-5.5_records.jsonl"
+  },
+  {
+    "label": "gemini-3.5-flash",
+    "slug": "google/gemini-3.5-flash",
+    "n_done": 220,
+    "n_failed": 0,
+    "tokens_in": 104194,
+    "tokens_out": 77724,
+    "out": "artifacts/baselines/llm/llm_gemini-3.5-flash_records.jsonl"
+  }
+]

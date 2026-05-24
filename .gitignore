@@ -1,0 +1,167 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+build/
+# `dist/` is Python's wheel-output convention; ignore globally EXCEPT the
+# frontend's vite build output (shipped as the static demo).
+dist/
+!demo/frontend/dist/
+wheels/
+.pytest_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Internal docs (handoffs, plans, agent notes)
+.internal/
+
+# Data / weights / training state (heavy, regenerable)
+/data/
+checkpoints/
+wandb/
+runs/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.parquet
+docs/RESEARCH_NOTEBOOK.md
+
+# Artifacts: ignore by default, then un-ignore the released eval/baseline
+# records that the paper analyses depend on. Heavyweight outputs (logs,
+# binary dumps, intermediate scratch) stay ignored.
+artifacts/*
+!artifacts/real_bugs/
+!artifacts/run7_step500/
+!artifacts/run11b/
+!artifacts/ablations/
+!artifacts/baselines/
+!artifacts/cegis/
+!artifacts/ochiai_baseline/
+!artifacts/transfer/
+!artifacts/training/
+
+artifacts/real_bugs/*
+!artifacts/real_bugs/run10_no_surgery/
+!artifacts/real_bugs/run10_stripped/
+!artifacts/real_bugs/run10_token_masked/
+!artifacts/real_bugs/run10_stripped_sibsubset.jsonl
+!artifacts/real_bugs/leak_audit.txt
+!artifacts/real_bugs/records.jsonl
+
+artifacts/real_bugs/run10_no_surgery/*
+!artifacts/real_bugs/run10_no_surgery/eval_records.jsonl
+!artifacts/real_bugs/run10_no_surgery/analysis.txt
+artifacts/real_bugs/run10_stripped/*
+!artifacts/real_bugs/run10_stripped/eval_records.jsonl
+!artifacts/real_bugs/run10_stripped/analysis.txt
+artifacts/real_bugs/run10_token_masked/*
+!artifacts/real_bugs/run10_token_masked/eval_records.jsonl
+
+artifacts/run7_step500/*
+!artifacts/run7_step500/no_surgery.jsonl
+!artifacts/run7_step500/stripped.jsonl
+!artifacts/run7_step500/token_masked.jsonl
+
+artifacts/run11b/*.tmp
+artifacts/run11a/
+
+artifacts/cegis/*
+!artifacts/cegis/3arm_results.jsonl
+!artifacts/cegis/3arm_results_v2.jsonl
+!artifacts/cegis/results.jsonl
+!artifacts/cegis/summary.json
+!artifacts/cegis/summary_3arm.json
+
+artifacts/baselines/*
+!artifacts/baselines/*.jsonl
+!artifacts/baselines/*.md
+!artifacts/baselines/llm/
+!artifacts/baselines/llm_disc/
+!artifacts/baselines/llm_with_markers/
+artifacts/baselines/qwen_surprisal_log.txt
+artifacts/baselines/llm_run.log
+
+artifacts/baselines/llm/*
+!artifacts/baselines/llm/*.jsonl
+!artifacts/baselines/llm/*.json
+!artifacts/baselines/llm/*.md
+artifacts/baselines/llm_disc/*
+!artifacts/baselines/llm_disc/*.jsonl
+!artifacts/baselines/llm_disc/*.json
+artifacts/baselines/llm_with_markers/*
+!artifacts/baselines/llm_with_markers/*.jsonl
+!artifacts/baselines/llm_with_markers/*.json
+
+artifacts/ablations/*
+!artifacts/ablations/*/
+!artifacts/ablations/*.md
+artifacts/ablations/*/*
+!artifacts/ablations/*/*.jsonl
+
+artifacts/ochiai_baseline/*
+!artifacts/ochiai_baseline/records.jsonl
+
+artifacts/transfer/**
+!artifacts/transfer/humanevalpack_rust/
+!artifacts/transfer/humanevalpack_rust/*.jsonl
+
+artifacts/training/*
+!artifacts/training/*.jsonl
+
+# Heavy artifacts (everywhere)
+*.bin
+*.safetensors
+*.pt
+
+# OS
+.DS_Store
+Thumbs.db
+.claude/
+
+# RunPod / training logs at root
+runpod_*.log
+*.log
+!demo/build_manifold.log
+nohup.out
+
+# Verus CEGIS scratch tmp* at root
+/tmp[0-9a-zA-Z_-]*
+/tmp*
+
+# Demo build artifacts
+demo/frontend/node_modules/
+demo/backend/data/*.parquet
+demo/backend/data/*.joblib
+demo/build_manifold.log
+# Keep demo/frontend/dist/ and demo/frontend/public/data/ — those are the
+# shipped static site and its precomputed data.
+
+# LaTeX build byproducts (paper/main.pdf is the canonical artifact)
+docs/main.aux
+docs/main.bbl
+docs/main.blg
+docs/main.log
+docs/main.out
+docs/main.toc
+docs/main.lof
+docs/main.lot
+docs/*.synctex.gz
+docs/main.tex.bak
+review/

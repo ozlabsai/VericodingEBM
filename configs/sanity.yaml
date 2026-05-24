@@ -1,0 +1,67 @@
+# Sanity-run config — small everything, no wandb, 20 steps on CPU/MPS.
+# Inherits structure from default.yaml but tighter.
+
+model:
+  backbone: "Qwen/Qwen2.5-Coder-1.5B"
+  sentinel_token: "<|fim_pad|>"
+  lora:
+    rank: 8
+    alpha: 16
+    dropout: 0.05
+    target_modules: ["q_proj", "v_proj"]   # minimal targets to keep memory low for CPU
+    embed_lora_rank: 0                      # skip embed LoRA on sanity run
+  head:
+    hidden_dim: 128
+    dropout: 0.1
+    init_std: 0.02
+  lse:
+    temp_start: 2.0
+    temp_end: 0.7
+
+data:
+  system_trajectory_path: "data/raw/system_trajectory_843.jsonl"
+  sft_safe_path: "data/raw/sft_safe_25k.json"
+  cache_dir: "data/cache"
+  max_seq_len: 2048                          # tighter than default 4k; large enough that L_spec fires on most traj triples
+  max_diff_lines: 3
+  split:
+    n_eval_specs: 10
+    sft_eval_frac: 0.05
+    seed: 42
+
+train:
+  optimizer: "adamw"
+  lr: 1.0e-4
+  betas: [0.9, 0.95]
+  weight_decay: 0.1
+  warmup_frac: 0.05
+  cosine_end_frac: 0.10
+  epochs: 1
+  # examples_per_batch_target = micro_batch_size * grad_accum, and the sampler
+  # truncates a triple+pair group to that size. Need >= 5 (1 traj triple = 3
+  # impls + 1 safe pair = 2 impls) to give both losses non-empty signal.
+  micro_batch_size: 5
+  grad_accum: 1
+  precision: "fp32"                          # bf16 not supported on CPU without flash-attn
+  gradient_checkpointing: false              # off for CPU; saves dtype headaches
+  batch_min_traj_triples: 1
+  batch_min_safe_pairs: 1
+  loss_weights:
+    spec: 1.0
+    line: 1.0
+  line_loss:
+    margin: 1.0
+  stop_point:
+    min_train_steps_before_check: 9999       # disable stop-point on sanity
+    loss_plateau_window: 9999
+    min_eval_auroc_epoch_1: 0.0
+
+eval:
+  every_n_steps: 9999                        # skip eval during sanity
+  probe_batch_size: 4
+
+logging:
+  wandb_project: "ebm-verus-sanity"
+  log_every: 1
+  energy_histogram_every: 100
+  input_grad_probe_every: 500

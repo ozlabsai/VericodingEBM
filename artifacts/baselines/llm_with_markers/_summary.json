@@ -1,0 +1,29 @@
+[
+  {
+    "label": "claude-opus-4.7",
+    "slug": "anthropic/claude-opus-4.7",
+    "n_done": 220,
+    "n_failed": 0,
+    "tokens_in": 135494,
+    "tokens_out": 5835,
+    "out": "artifacts/baselines/llm_with_markers/llm_claude-opus-4.7_records.jsonl"
+  },
+  {
+    "label": "qwen3.7-max",
+    "slug": "qwen/qwen3.7-max",
+    "n_done": 220,
+    "n_failed": 0,
+    "tokens_in": 103661,
+    "tokens_out": 93639,
+    "out": "artifacts/baselines/llm_with_markers/llm_qwen3.7-max_records.jsonl"
+  },
+  {
+    "label": "gemini-3.5-flash",
+    "slug": "google/gemini-3.5-flash",
+    "n_done": 220,
+    "n_failed": 0,
+    "tokens_in": 105101,
+    "tokens_out": 70837,
+    "out": "artifacts/baselines/llm_with_markers/llm_gemini-3.5-flash_records.jsonl"
+  }
+]
