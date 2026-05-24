@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import ManifoldScatter, { type ScatterPoint } from './ManifoldScatter'
 import LineEditor from './LineEditor'
 import ExamplesPicker from './ExamplesPicker'
-import { fetchImpls, fetchLines, fetchImplDetail, type ImplPoint, type LinePoint, type ImplDetail, type ScoreLineResponse } from './api'
+import CorruptionLab from './CorruptionLab'
+import { fetchImpls, fetchLines, fetchImplDetail, IS_STATIC_MODE, type ImplPoint, type LinePoint, type ImplDetail, type ScoreLineResponse } from './api'
 
 const SAMPLE_SPEC = `// Returns the sum of two non-negative integers.
 fn add(a: u32, b: u32) -> (s: u32)
@@ -132,6 +133,16 @@ export default function App() {
     setUserScore(resp)
   }
 
+  // CorruptionLab → also drops a ball on the impl manifold for visual feedback.
+  const handleCorruptionProject = (xy: [number, number], energy: number, _label: string) => {
+    setUserScore({
+      per_line_energies: [],
+      line_xys: [],
+      whole_impl_energy: energy,
+      whole_impl_xy: xy,
+    } as ScoreLineResponse)
+  }
+
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
@@ -200,17 +211,20 @@ export default function App() {
           </div>
         </div>
 
-        {/* Right rail: examples + editor + selected impl detail */}
+        {/* Right rail: corruption-lab + examples + (live-only) editor */}
         <aside className="flex flex-col gap-2 overflow-hidden">
+          <CorruptionLab onProject={handleCorruptionProject} />
           <ExamplesPicker
             onPick={loadImpl}
             selectedId={selectedImpl?.impl.impl_id ?? null}
           />
-          <LineEditor
-            initialSpec={SAMPLE_SPEC}
-            initialImpl={SAMPLE_IMPL}
-            onScored={handleScored}
-          />
+          {!IS_STATIC_MODE && (
+            <LineEditor
+              initialSpec={SAMPLE_SPEC}
+              initialImpl={SAMPLE_IMPL}
+              onScored={handleScored}
+            />
+          )}
           {selectedImpl && (
             <div className="bg-panel border border-border rounded p-3 overflow-y-auto flex-1">
               <div className="text-xs text-zinc-400 uppercase tracking-wider mb-1">

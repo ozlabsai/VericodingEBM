@@ -1,0 +1,851 @@
+[
+  {
+    "name": "adts_generics_offByOne",
+    "spec_id": "verus-real-adts_generics-39d41db00801",
+    "label": "ADT field: off-by-one assertion",
+    "blurb": "The FAIL impl asserts `id(p2).a >= 1` for a struct with field value 2; should be `>= 0` (or any smaller bound). The fix is a single-digit change in the assertion. Model should flag the failing assertion line.",
+    "spec": "\n        struct P<A> {\n            a: A,\n        }\n\n        #[verifier(opaque)] /* vattr */\n        spec fn id<A>(a: A) -> A {\n            a\n        }\n",
+    "variants": [
+      {
+        "label": "Original FAIL (with `// FAILS` marker)",
+        "kind": "fail_original",
+        "note": "The failing implementation, as it appears in the corpus.",
+        "impl": "        fn fp(p: P<u64>) {\n            assert(p.a >= 0);\n            let p2: P<u8> = P { a: 2 };\n            assert(id(p).a >= 0);\n            assert(id(p2).a >= 1); // FAILS\n        }\n    ",
+        "per_line_energies": [
+          -4.312364101409912,
+          -2.0651328563690186,
+          -3.724514961242676,
+          -1.357027530670166,
+          -3.741136312484741,
+          -4.280332088470459
+        ],
+        "line_xys": [
+          [
+            -8.406805992126465,
+            -2.913304328918457
+          ],
+          [
+            5.622659206390381,
+            2.4934420585632324
+          ],
+          [
+            4.510895729064941,
+            0.38299620151519775
+          ],
+          [
+            5.428738594055176,
+            2.885453462600708
+          ],
+          [
+            9.393533706665039,
+            -2.2792484760284424
+          ],
+          [
+            -0.6494276523590088,
+            10.90005111694336
+          ]
+        ],
+        "whole_impl_energy": 3.051603078842163,
+        "whole_impl_xy": [
+          5.2392191886901855,
+          -2.309102773666382
+        ]
+      },
+      {
+        "label": "FAIL with the `// FAILS` marker stripped",
+        "kind": "fail_marker_stripped",
+        "note": "Same buggy code, but the marker token Qwen pretrained on is gone. Hybrid-Averse should still flag the bug.",
+        "impl": "        fn fp(p: P<u64>) {\n            assert(p.a >= 0);\n            let p2: P<u8> = P { a: 2 };\n            assert(id(p).a >= 0);\n            assert(id(p2).a >= 1);\n        }\n    ",
+        "per_line_energies": [
+          -4.312364101409912,
+          -2.0651328563690186,
+          -3.724514961242676,
+          -1.357027530670166,
+          -0.8481870889663696,
+          -3.9516422748565674
+        ],
+        "line_xys": [
+          [
+            -8.406805992126465,
+            -2.913304328918457
+          ],
+          [
+            5.622659206390381,
+            2.4934420585632324
+          ],
+          [
+            4.510895729064941,
+            0.38299620151519775
+          ],
+          [
+            5.428738594055176,
+            2.885453462600708
+          ],
+          [
+            5.5369768142700195,
+            2.838397741317749
+          ],
+          [
+            -0.19628357887268066,
+            10.417791366577148
+          ]
+        ],
+        "whole_impl_energy": -9.885170936584473,
+        "whole_impl_xy": [
+          5.45591926574707,
+          -2.4405746459960938
+        ]
+      },
+      {
+        "label": "Sibling PASS (the corrected version)",
+        "kind": "pass_sibling",
+        "note": "A different implementation that actually verifies. Model energies should drop visibly across the board.",
+        "impl": "        fn fp(p: P<u64>) {\n            assert(p.a >= 0);\n            let p2: P<u8> = P { a: 2 };\n            assert(id(p).a >= 0);\n            assert(id(p2).a >= 0);\n        }\n    ",
+        "per_line_energies": [
+          -4.312364101409912,
+          -2.0651328563690186,
+          -3.724514961242676,
+          -1.357027530670166,
+          -1.154883623123169,
+          -4.013641357421875
+        ],
+        "line_xys": [
+          [
+            -8.406805992126465,
+            -2.913304328918457
+          ],
+          [
+            5.622659206390381,
+            2.4934420585632324
+          ],
+          [
+            4.510895729064941,
+            0.38299620151519775
+          ],
+          [
+            5.428738594055176,
+            2.885453462600708
+          ],
+          [
+            5.454499244689941,
+            2.89972186088562
+          ],
+          [
+            -0.25493931770324707,
+            10.51761245727539
+          ]
+        ],
+        "whole_impl_energy": -9.683773040771484,
+        "whole_impl_xy": [
+          5.505842208862305,
+          -2.4271240234375
+        ]
+      }
+    ]
+  },
+  {
+    "name": "match_assertOnBool",
+    "spec_id": "verus-real-match-38d4dd210af4",
+    "label": "Destructured bool \u2014 wrong assertion",
+    "blurb": "Pattern-binds `b: false` to `z`, then asserts `z` (which is false). The fix is to assert `!z`. Tiny code, obvious bug \u2014 perfect to corrupt either way.",
+    "spec": "\n        struct Pair<A, B> { a: A, b: B }\n",
+    "variants": [
+      {
+        "label": "Original FAIL (with `// FAILS` marker)",
+        "kind": "fail_original",
+        "note": "The failing implementation, as it appears in the corpus.",
+        "impl": "        fn test() {\n            let Pair { b: z, .. } = Pair { a: true, b: false };\n            assert(z); // FAILS\n        }\n    ",
+        "per_line_energies": [
+          -4.159627437591553,
+          -3.618788480758667,
+          -4.849560260772705,
+          -4.62613582611084
+        ],
+        "line_xys": [
+          [
+            -8.934646606445312,
+            -3.376649856567383
+          ],
+          [
+            4.6714982986450195,
+            0.46984797716140747
+          ],
+          [
+            9.336337089538574,
+            -2.825427770614624
+          ],
+          [
+            -0.39905214309692383,
+            11.573123931884766
+          ]
+        ],
+        "whole_impl_energy": -1.275396704673767,
+        "whole_impl_xy": [
+          3.310936212539673,
+          -1.9560261964797974
+        ]
+      },
+      {
+        "label": "FAIL with the `// FAILS` marker stripped",
+        "kind": "fail_marker_stripped",
+        "note": "Same buggy code, but the marker token Qwen pretrained on is gone. Hybrid-Averse should still flag the bug.",
+        "impl": "        fn test() {\n            let Pair { b: z, .. } = Pair { a: true, b: false };\n            assert(z);\n        }\n    ",
+        "per_line_energies": [
+          -4.159628868103027,
+          -3.6187844276428223,
+          -3.3367698192596436,
+          -4.453369140625
+        ],
+        "line_xys": [
+          [
+            -8.934635162353516,
+            -3.3766422271728516
+          ],
+          [
+            4.671501159667969,
+            0.4698495864868164
+          ],
+          [
+            5.637628555297852,
+            2.412722110748291
+          ],
+          [
+            -0.5781629085540771,
+            11.25796127319336
+          ]
+        ],
+        "whole_impl_energy": -11.960877418518066,
+        "whole_impl_xy": [
+          3.7518413066864014,
+          -3.2721614837646484
+        ]
+      },
+      {
+        "label": "Sibling PASS (the corrected version)",
+        "kind": "pass_sibling",
+        "note": "A different implementation that actually verifies. Model energies should drop visibly across the board.",
+        "impl": "        fn test() {\n            let Pair { b: z, .. } = Pair { a: true, b: false };\n            assert(!z);\n        }\n    ",
+        "per_line_energies": [
+          -4.159627437591553,
+          -3.618788480758667,
+          -2.8719632625579834,
+          -4.402265548706055
+        ],
+        "line_xys": [
+          [
+            -8.934646606445312,
+            -3.376649856567383
+          ],
+          [
+            4.6714982986450195,
+            0.46984797716140747
+          ],
+          [
+            5.454472064971924,
+            2.3245902061462402
+          ],
+          [
+            -0.5004818439483643,
+            11.212791442871094
+          ]
+        ],
+        "whole_impl_energy": -12.191555976867676,
+        "whole_impl_xy": [
+          4.147657871246338,
+          -3.402697801589966
+        ]
+      }
+    ]
+  },
+  {
+    "name": "return_falseEnsures",
+    "spec_id": "verus-real-return-637895b687d2",
+    "label": "Early return with `ensures false`",
+    "blurb": "The spec claims `ensures false` (which is impossible for any non-diverging function), so the early `return;` fails. The PASS variant uses `ensures true`.",
+    "spec": "\n        fn test_ret(b: bool)\n            requires b\n            ensures false\n        {\n            if b {\n                return; // FAILS\n            }\n        }\n    ",
+    "variants": [
+      {
+        "label": "Original FAIL (with `// FAILS` marker)",
+        "kind": "fail_original",
+        "note": "The failing implementation, as it appears in the corpus.",
+        "impl": "\n        fn test_ret(b: bool)\n            requires b\n            ensures false\n        {\n            if b {\n                return; // FAILS\n            }\n        }\n    ",
+        "per_line_energies": [
+          -4.930928707122803,
+          -5.1179633140563965,
+          -3.8959875106811523,
+          -4.980451583862305,
+          -4.769778251647949,
+          -5.5469231605529785,
+          -5.152368068695068,
+          -4.921245098114014
+        ],
+        "line_xys": [
+          [
+            -0.826542317867279,
+            -3.427609920501709
+          ],
+          [
+            0.021525084972381592,
+            -2.374438762664795
+          ],
+          [
+            1.2383750677108765,
+            -2.2680063247680664
+          ],
+          [
+            -8.136902809143066,
+            3.2441844940185547
+          ],
+          [
+            -7.339657783508301,
+            2.867629051208496
+          ],
+          [
+            8.162191390991211,
+            -3.208183765411377
+          ],
+          [
+            0.3773815631866455,
+            14.018171310424805
+          ],
+          [
+            -0.005739450454711914,
+            13.467951774597168
+          ]
+        ],
+        "whole_impl_energy": -9.10583782196045,
+        "whole_impl_xy": [
+          -4.327732086181641,
+          0.10555781424045563
+        ]
+      },
+      {
+        "label": "FAIL with the `// FAILS` marker stripped",
+        "kind": "fail_marker_stripped",
+        "note": "Same buggy code, but the marker token Qwen pretrained on is gone. Hybrid-Averse should still flag the bug.",
+        "impl": "\n        fn test_ret(b: bool)\n            requires b\n            ensures false\n        {\n            if b {\n                return;\n            }\n        }\n    ",
+        "per_line_energies": [
+          -4.930928707122803,
+          -5.1179633140563965,
+          -3.8959875106811523,
+          -4.980451583862305,
+          -4.769778251647949,
+          -4.264760971069336,
+          -4.945723056793213,
+          -4.943498134613037
+        ],
+        "line_xys": [
+          [
+            -0.826542317867279,
+            -3.427609920501709
+          ],
+          [
+            0.021525084972381592,
+            -2.374438762664795
+          ],
+          [
+            1.2383750677108765,
+            -2.2680063247680664
+          ],
+          [
+            -8.136902809143066,
+            3.2441844940185547
+          ],
+          [
+            -7.339657783508301,
+            2.867629051208496
+          ],
+          [
+            4.890426158905029,
+            0.03740590810775757
+          ],
+          [
+            0.05954790115356445,
+            13.606391906738281
+          ],
+          [
+            -0.013641595840454102,
+            13.338898658752441
+          ]
+        ],
+        "whole_impl_energy": -9.381916046142578,
+        "whole_impl_xy": [
+          -4.198087215423584,
+          0.17790813744068146
+        ]
+      },
+      {
+        "label": "Sibling PASS (the corrected version)",
+        "kind": "pass_sibling",
+        "note": "A different implementation that actually verifies. Model energies should drop visibly across the board.",
+        "impl": "\n        fn test_ret(b: bool)\n            ensures true\n        {\n            if b {\n                return;\n            }\n        }\n    ",
+        "per_line_energies": [
+          -4.930928707122803,
+          -4.149007797241211,
+          -4.774252414703369,
+          -4.768009662628174,
+          -4.341168403625488,
+          -4.930472373962402,
+          -4.916696548461914
+        ],
+        "line_xys": [
+          [
+            -0.826542317867279,
+            -3.427609920501709
+          ],
+          [
+            1.1416114568710327,
+            -2.5038437843322754
+          ],
+          [
+            -8.005287170410156,
+            3.195586681365967
+          ],
+          [
+            -7.412189960479736,
+            2.835704803466797
+          ],
+          [
+            4.903536319732666,
+            0.044904112815856934
+          ],
+          [
+            -0.2261216640472412,
+            13.16274642944336
+          ],
+          [
+            -0.18888378143310547,
+            13.121706008911133
+          ]
+        ],
+        "whole_impl_energy": -9.539336204528809,
+        "whole_impl_xy": [
+          -4.301799774169922,
+          -0.18400156497955322
+        ]
+      }
+    ]
+  },
+  {
+    "name": "quantifiers_missingTrigger",
+    "spec_id": "verus-real-quantifiers-5417c12c4ee6",
+    "label": "Existential without instantiation hint",
+    "blurb": "The FAIL impl asks Verus to prove an existential without giving it a witness; the PASS variant provides one via an explicit `assert(tr::<nat>(300))`. Classic SMT-trigger problem.",
+    "spec": "\n        spec fn tr<A>(a: A) -> bool {\n            true\n        }\n\n        proof fn test1() {\n            assert(exists|i: nat| i >= 0 && tr(i)); // FAILS\n        }\n    ",
+    "variants": [
+      {
+        "label": "Original FAIL (with `// FAILS` marker)",
+        "kind": "fail_original",
+        "note": "The failing implementation, as it appears in the corpus.",
+        "impl": "\n        spec fn tr<A>(a: A) -> bool {\n            true\n        }\n\n        proof fn test1() {\n            assert(exists|i: nat| i >= 0 && tr(i)); // FAILS\n        }\n    ",
+        "per_line_energies": [
+          -4.120296955108643,
+          -5.266938209533691,
+          -4.786546230316162,
+          -4.127711296081543,
+          -4.348798751831055,
+          -4.325232982635498
+        ],
+        "line_xys": [
+          [
+            -6.959667205810547,
+            -2.017061710357666
+          ],
+          [
+            1.3870033025741577,
+            -1.9296854734420776
+          ],
+          [
+            -1.6163464784622192,
+            12.248452186584473
+          ],
+          [
+            -5.666328430175781,
+            -0.9144415259361267
+          ],
+          [
+            8.959779739379883,
+            -2.973499059677124
+          ],
+          [
+            -0.19122314453125,
+            12.748680114746094
+          ]
+        ],
+        "whole_impl_energy": -1.3118290901184082,
+        "whole_impl_xy": [
+          1.0291283130645752,
+          1.2617019414901733
+        ]
+      },
+      {
+        "label": "FAIL with the `// FAILS` marker stripped",
+        "kind": "fail_marker_stripped",
+        "note": "Same buggy code, but the marker token Qwen pretrained on is gone. Hybrid-Averse should still flag the bug.",
+        "impl": "\n        spec fn tr<A>(a: A) -> bool {\n            true\n        }\n\n        proof fn test1() {\n            assert(exists|i: nat| i >= 0 && tr(i));\n        }\n    ",
+        "per_line_energies": [
+          -4.120296955108643,
+          -5.266938209533691,
+          -4.786546230316162,
+          -4.127711296081543,
+          -0.9432859420776367,
+          -3.8172919750213623
+        ],
+        "line_xys": [
+          [
+            -6.959667205810547,
+            -2.017061710357666
+          ],
+          [
+            1.3870033025741577,
+            -1.9296854734420776
+          ],
+          [
+            -1.6163464784622192,
+            12.248452186584473
+          ],
+          [
+            -5.666328430175781,
+            -0.9144415259361267
+          ],
+          [
+            5.502582550048828,
+            2.765582323074341
+          ],
+          [
+            -0.47302865982055664,
+            11.527365684509277
+          ]
+        ],
+        "whole_impl_energy": -2.648362159729004,
+        "whole_impl_xy": [
+          2.6825802326202393,
+          -0.8163268566131592
+        ]
+      },
+      {
+        "label": "Sibling PASS (the corrected version)",
+        "kind": "pass_sibling",
+        "note": "A different implementation that actually verifies. Model energies should drop visibly across the board.",
+        "impl": "\n        spec fn tr<A>(a: A) -> bool {\n            true\n        }\n\n        proof fn test1() {\n            assert(tr::<nat>(300));\n            assert(exists|i: nat| i >= 0 && tr(i));\n        }\n    ",
+        "per_line_energies": [
+          -4.120296955108643,
+          -5.266938209533691,
+          -4.786546230316162,
+          -4.127711296081543,
+          -1.568681240081787,
+          -0.6954700946807861,
+          -3.762420892715454
+        ],
+        "line_xys": [
+          [
+            -6.959667205810547,
+            -2.017061710357666
+          ],
+          [
+            1.3870033025741577,
+            -1.9296854734420776
+          ],
+          [
+            -1.6163464784622192,
+            12.248452186584473
+          ],
+          [
+            -5.666328430175781,
+            -0.9144415259361267
+          ],
+          [
+            5.488433837890625,
+            2.6391892433166504
+          ],
+          [
+            5.622238636016846,
+            2.9574265480041504
+          ],
+          [
+            0.2243821620941162,
+            10.356048583984375
+          ]
+        ],
+        "whole_impl_energy": -5.63201379776001,
+        "whole_impl_xy": [
+          3.900352716445923,
+          -2.063196897506714
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ext_equal_missingAttr",
+    "spec_id": "verus-real-ext_equal-f53fcd66fb8a",
+    "label": "Extensional equality \u2014 missing attribute",
+    "blurb": "Verus needs `#[verifier::auto_ext_equal()]` to compare two `spec_fn`s for extensional equality. The FAIL drops the attribute (and the matching assume).",
+    "spec": "\n        proof fn test(x: spec_fn(int, u8) -> int, y: spec_fn(int, u8) -> int) {\n            assert(x =~= y); // FAILS\n        }\n    ",
+    "variants": [
+      {
+        "label": "Original FAIL (with `// FAILS` marker)",
+        "kind": "fail_original",
+        "note": "The failing implementation, as it appears in the corpus.",
+        "impl": "\n        proof fn test(x: spec_fn(int, u8) -> int, y: spec_fn(int, u8) -> int) {\n            assert(x =~= y); // FAILS\n        }\n    ",
+        "per_line_energies": [
+          -3.775700807571411,
+          -5.459646701812744,
+          -4.552056789398193
+        ],
+        "line_xys": [
+          [
+            -6.556730270385742,
+            -2.1790268421173096
+          ],
+          [
+            9.042189598083496,
+            -3.1906418800354004
+          ],
+          [
+            -1.3388727903366089,
+            11.240428924560547
+          ]
+        ],
+        "whole_impl_energy": -0.6807039976119995,
+        "whole_impl_xy": [
+          1.3387033939361572,
+          0.644698977470398
+        ]
+      },
+      {
+        "label": "FAIL with the `// FAILS` marker stripped",
+        "kind": "fail_marker_stripped",
+        "note": "Same buggy code, but the marker token Qwen pretrained on is gone. Hybrid-Averse should still flag the bug.",
+        "impl": "\n        proof fn test(x: spec_fn(int, u8) -> int, y: spec_fn(int, u8) -> int) {\n            assert(x =~= y);\n        }\n    ",
+        "per_line_energies": [
+          -3.775700807571411,
+          -3.684814691543579,
+          -4.394778728485107
+        ],
+        "line_xys": [
+          [
+            -6.556730270385742,
+            -2.1790268421173096
+          ],
+          [
+            4.1410136222839355,
+            1.9373893737792969
+          ],
+          [
+            -1.2933682203292847,
+            11.707147598266602
+          ]
+        ],
+        "whole_impl_energy": -1.084522008895874,
+        "whole_impl_xy": [
+          0.7920708656311035,
+          -0.5986494421958923
+        ]
+      },
+      {
+        "label": "Sibling PASS (the corrected version)",
+        "kind": "pass_sibling",
+        "note": "A different implementation that actually verifies. Model energies should drop visibly across the board.",
+        "impl": "\n        #[verifier::auto_ext_equal()]\n        proof fn test(x: spec_fn(int, u8) -> int, y: spec_fn(int, u8) -> int) {\n            assume(forall|i: int, j: u8| #[trigger] x(i, j) == y(i, j));\n            assert(x =~= y);\n        }\n    ",
+        "per_line_energies": [
+          -3.517425537109375,
+          -3.9848458766937256,
+          -1.116733431816101,
+          -3.500765323638916,
+          -4.4335246086120605
+        ],
+        "line_xys": [
+          [
+            -1.1604024171829224,
+            -5.00888729095459
+          ],
+          [
+            -6.0758490562438965,
+            -1.4889153242111206
+          ],
+          [
+            5.6109619140625,
+            2.5506060123443604
+          ],
+          [
+            4.978909492492676,
+            2.521366834640503
+          ],
+          [
+            -0.7007665634155273,
+            11.749643325805664
+          ]
+        ],
+        "whole_impl_energy": -4.954568862915039,
+        "whole_impl_xy": [
+          3.5154690742492676,
+          -1.849034309387207
+        ]
+      }
+    ]
+  },
+  {
+    "name": "traits_typeBoundedEq",
+    "spec_id": "verus-real-traits-47a2060aa419",
+    "label": "Trait dispatch: type-bounded equality",
+    "blurb": "`S::f(1u8)` and `S::f(1u16)` are dispatched to two different trait impls (true vs false), so `==` on them fails. PASS variant decomposes the comparison into individual assertions.",
+    "spec": "\n        trait T<A> { spec fn f(a: A) -> bool; }\n        struct S {}\n        impl T<u8> for S { spec fn f(a: u8) -> bool { true } }\n        impl T<u16> for S { spec fn f(a: u16) -> bool { false } }\n        proof fn test() {\n            assert(S::f(1u8) == S::f(1u16)); // FAILS\n        }\n    ",
+    "variants": [
+      {
+        "label": "Original FAIL (with `// FAILS` marker)",
+        "kind": "fail_original",
+        "note": "The failing implementation, as it appears in the corpus.",
+        "impl": "\n        trait T<A> { spec fn f(a: A) -> bool; }\n        struct S {}\n        impl T<u8> for S { spec fn f(a: u8) -> bool { true } }\n        impl T<u16> for S { spec fn f(a: u16) -> bool { false } }\n        proof fn test() {\n            assert(S::f(1u8) == S::f(1u16)); // FAILS\n        }\n    ",
+        "per_line_energies": [
+          -4.155222415924072,
+          -4.9867777824401855,
+          -4.5410332679748535,
+          -4.580207824707031,
+          -4.291271686553955,
+          -4.639759540557861,
+          -4.371699810028076
+        ],
+        "line_xys": [
+          [
+            -3.190279722213745,
+            -3.3201262950897217
+          ],
+          [
+            -0.3200542628765106,
+            -3.314215660095215
+          ],
+          [
+            -2.583231210708618,
+            -2.029024839401245
+          ],
+          [
+            -2.574728012084961,
+            -2.0363216400146484
+          ],
+          [
+            -5.187599182128906,
+            0.30855077505111694
+          ],
+          [
+            8.843928337097168,
+            -2.9548017978668213
+          ],
+          [
+            0.4304656982421875,
+            13.087059020996094
+          ]
+        ],
+        "whole_impl_energy": -1.8506885766983032,
+        "whole_impl_xy": [
+          -2.0996992588043213,
+          2.2170209884643555
+        ]
+      },
+      {
+        "label": "FAIL with the `// FAILS` marker stripped",
+        "kind": "fail_marker_stripped",
+        "note": "Same buggy code, but the marker token Qwen pretrained on is gone. Hybrid-Averse should still flag the bug.",
+        "impl": "\n        trait T<A> { spec fn f(a: A) -> bool; }\n        struct S {}\n        impl T<u8> for S { spec fn f(a: u8) -> bool { true } }\n        impl T<u16> for S { spec fn f(a: u16) -> bool { false } }\n        proof fn test() {\n            assert(S::f(1u8) == S::f(1u16));\n        }\n    ",
+        "per_line_energies": [
+          -4.155222415924072,
+          -4.9867777824401855,
+          -4.5410332679748535,
+          -4.580207824707031,
+          -4.291271686553955,
+          -3.3606410026550293,
+          -4.317942142486572
+        ],
+        "line_xys": [
+          [
+            -3.190279722213745,
+            -3.3201262950897217
+          ],
+          [
+            -0.3200542628765106,
+            -3.314215660095215
+          ],
+          [
+            -2.583231210708618,
+            -2.029024839401245
+          ],
+          [
+            -2.574728012084961,
+            -2.0363216400146484
+          ],
+          [
+            -5.187599182128906,
+            0.30855077505111694
+          ],
+          [
+            4.150506973266602,
+            2.433469533920288
+          ],
+          [
+            0.5894498825073242,
+            13.19697380065918
+          ]
+        ],
+        "whole_impl_energy": -1.9686957597732544,
+        "whole_impl_xy": [
+          -1.8611252307891846,
+          2.256967306137085
+        ]
+      },
+      {
+        "label": "Sibling PASS (the corrected version)",
+        "kind": "pass_sibling",
+        "note": "A different implementation that actually verifies. Model energies should drop visibly across the board.",
+        "impl": "\n        trait T<A> { spec fn f(a: A) -> bool; }\n        struct S {}\n        impl T<u8> for S { spec fn f(a: u8) -> bool { true } }\n        impl T<u16> for S { spec fn f(a: u16) -> bool { false } }\n        proof fn test() {\n            assert(S::f(1u8));\n            assert(!S::f(1u16));\n        }\n    ",
+        "per_line_energies": [
+          -4.155222415924072,
+          -4.9867777824401855,
+          -4.5410332679748535,
+          -4.580207824707031,
+          -4.291271686553955,
+          -3.4319276809692383,
+          -2.9175608158111572,
+          -4.3966288566589355
+        ],
+        "line_xys": [
+          [
+            -3.190279722213745,
+            -3.3201262950897217
+          ],
+          [
+            -0.3200542628765106,
+            -3.314215660095215
+          ],
+          [
+            -2.583231210708618,
+            -2.029024839401245
+          ],
+          [
+            -2.574728012084961,
+            -2.0363216400146484
+          ],
+          [
+            -5.187599182128906,
+            0.30855077505111694
+          ],
+          [
+            4.739560604095459,
+            2.7308783531188965
+          ],
+          [
+            4.8291473388671875,
+            3.0484092235565186
+          ],
+          [
+            0.8358564376831055,
+            12.786066055297852
+          ]
+        ],
+        "whole_impl_energy": -0.8767989873886108,
+        "whole_impl_xy": [
+          -1.0229911804199219,
+          1.9529011249542236
+        ]
+      }
+    ]
+  }
+]
