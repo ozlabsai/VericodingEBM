@@ -75,7 +75,7 @@ function Hero() {
                target="_blank" rel="noreferrer"
                className="press text-text1 hover:text-text0 text-[14px] inline-flex items-baseline gap-1.5 border-b border-line2 hover:border-text1 pb-0.5">
               Read the paper
-              <span className="text-text3 text-[12px]">23pp</span>
+              <span className="text-text3 text-[12px]">19pp</span>
             </a>
             <a href="https://huggingface.co/OzLabs/VericodingEBM"
                target="_blank" rel="noreferrer"
