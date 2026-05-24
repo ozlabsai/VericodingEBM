@@ -3,7 +3,13 @@
  *     Single family across the entire site; weight + size carry hierarchy.
  *   - JetBrains Mono — tabular numbers, code, mono labels.
  * One sans family. No display serif. No editorial pose. */
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Type stack:
+ *   - Chillax (Fontshare, ITF FFL) — display: hero, h1, h2, big numbers.
+ *     Distinctive geometric semi-condensed, breaks defaults.
+ *   - Inter Tight (Google Fonts, OFL) — body. Reliable workhorse.
+ *   - JetBrains Mono — tabular numbers, code, mono labels. */
+@import url('https://api.fontshare.com/v2/css?f[]=chillax@400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -16,7 +22,8 @@
 
 html, body, #root { height: 100%; margin: 0; padding: 0; }
 body {
-  font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-feature-settings: 'ss03', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: oklch(98% 0 0);   /* near-white, no hue */
