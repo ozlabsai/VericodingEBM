@@ -53,8 +53,7 @@ function Hero() {
           <h1 className="font-display text-text0 leading-[0.95] tracking-tight mb-7"
               style={{ fontSize: 'clamp(2.6rem, 6vw, 5.2rem)', letterSpacing: '-0.035em' }}>
             Where to <em className="italic font-display">look</em><br/>
-            when verification<br/>
-            fails.
+            when verification&nbsp;fails.
           </h1>
           <p className="text-text2 text-[17px] leading-[1.6] max-w-xl">
             A 1.5B-parameter discriminative energy-based model that scores each
@@ -132,7 +131,7 @@ function FindingsTable() {
           <div>
             <Eyebrow n="01">Findings</Eyebrow>
             <h2 className="font-display text-text0 text-3xl md:text-5xl leading-[1.05] tracking-tight">
-              Six measurements.<br/>Two we take.
+              Six measurements.<br/>Two we&nbsp;take.
             </h2>
           </div>
           <p className="text-text2 text-[15px] leading-[1.6] max-w-xl">
@@ -178,7 +177,7 @@ function AuditSection() {
             <Eyebrow n="02">The audit</Eyebrow>
             <h2 className="font-display text-text0 text-3xl md:text-5xl leading-[1.05] tracking-tight">
               Strip the marker.<br/>
-              <em className="italic">Watch the energy crash.</em>
+              <em className="italic">Watch the energy&nbsp;crash.</em>
             </h2>
           </div>
           <p className="text-text2 text-[15px] leading-[1.6] max-w-xl">
@@ -216,7 +215,7 @@ function TrainingArcSection() {
             <Eyebrow n="03">Training arc</Eyebrow>
             <h2 className="font-display text-text0 text-3xl md:text-5xl leading-[1.05] tracking-tight">
               Five runs.<br/>
-              <em className="italic">One that survived audit.</em>
+              <em className="italic">One that survived&nbsp;audit.</em>
             </h2>
           </div>
           <p className="text-text2 text-[15px] leading-[1.6] max-w-xl">
@@ -247,7 +246,7 @@ function ArtifactsSection() {
           <div>
             <Eyebrow n="04">What we release</Eyebrow>
             <h2 className="font-display text-text0 text-3xl md:text-5xl leading-[1.05] tracking-tight">
-              Four reusable<br/>artifacts.
+              Four reusable&nbsp;artifacts.
             </h2>
           </div>
           <p className="text-text2 text-[15px] leading-[1.6] max-w-xl">
@@ -301,7 +300,7 @@ function MethodBlock() {
         <div>
           <Eyebrow n="05">Method</Eyebrow>
           <h2 className="font-display text-text0 text-3xl md:text-5xl leading-[1.05] tracking-tight mb-4">
-            The stack,<br/>in eight lines.
+            The stack,<br/>in eight&nbsp;lines.
           </h2>
           <p className="text-text2 text-sm leading-relaxed max-w-sm">
             §2–§3 of the paper. The post-mortem on what didn't work, the
@@ -329,8 +328,8 @@ function Closing() {
       <div className="max-w-[1400px] mx-auto px-6 py-16 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 items-end">
         <h2 className="font-display text-text0 leading-[1.05] tracking-tight"
             style={{ fontSize: 'clamp(1.8rem, 3.4vw, 2.8rem)' }}>
-          The demo runs in your browser.<br/>
-          <span className="text-text3 italic">No model load. No backend.</span>
+          The demo runs in your&nbsp;browser.<br/>
+          <span className="text-text3 italic">No model load. No&nbsp;backend.</span>
         </h2>
         <a href="/manifold"
            className="press inline-flex items-center gap-2 px-4 py-3 rounded-md bg-accent text-white hover:bg-accent-d font-medium text-[15px] whitespace-nowrap">
