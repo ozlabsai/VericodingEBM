@@ -185,7 +185,7 @@ export default function LandingHeroFigure() {
       onMouseMove={handleMouse}
       onMouseLeave={handleLeave}
       className="relative w-full overflow-hidden rounded-xl border border-line1 bg-bg1"
-      style={{ aspectRatio: '16 / 7', minHeight: 220 }}
+      style={{ aspectRatio: '4 / 3', minHeight: 360 }}
     >
       <canvas ref={canvasRef} className="absolute inset-0 block" />
       {/* Top-left caption — backdrop pill so it stays legible over points */}

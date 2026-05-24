@@ -182,18 +182,18 @@ export default function HeroPerLineFigure() {
           return (
             <div key={i} className="grid grid-cols-[24px_minmax(90px,140px)_1fr] gap-3 items-center py-[1px]">
               <span className="text-right text-text3/70 tabular text-[10px]">{i + 1}</span>
-              <div className="relative h-3 bg-bg2 rounded-sm overflow-hidden">
+              <div className="relative h-3.5 bg-bg2 rounded-sm overflow-hidden border border-line1">
                 {has && (
                   <div
-                    className={`absolute inset-y-0 left-0 ${isTop ? 'bg-accent' : 'bg-text3/35'}`}
+                    className={`absolute inset-y-0 left-0 ${isTop ? 'bg-text0' : 'bg-text2/70'}`}
                     style={{
-                      width: `${Math.max(3, t * 100)}%`,
+                      width: `${Math.max(4, t * 100)}%`,
                       transition: 'width 600ms cubic-bezier(0.77, 0, 0.175, 1), background-color 200ms cubic-bezier(0.23, 1, 0.32, 1)',
                     }}
                   />
                 )}
                 {has && (
-                  <span className={`absolute inset-0 flex items-center justify-end pr-1.5 text-[9px] tabular ${isTop ? 'text-bg0' : 'text-text2'}`}>
+                  <span className={`absolute inset-0 flex items-center justify-end pr-1.5 text-[9px] tabular font-medium ${isTop ? 'text-bg0' : 'text-bg0'}`}>
                     {energy!.toFixed(2)}
                   </span>
                 )}

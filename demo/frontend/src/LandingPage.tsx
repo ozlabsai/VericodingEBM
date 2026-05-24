@@ -66,19 +66,19 @@ function Hero() {
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <a href="/manifold"
-               className="press inline-flex items-center gap-2 px-5 py-3 rounded bg-text0 text-bg0 hover:bg-text1 font-medium text-[15px]">
+               className="press group inline-flex items-center gap-3 px-7 py-4 rounded-md bg-text0 text-bg0 hover:bg-text1 font-semibold text-[16px] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.25)]">
               Open the demo
-              <svg width="14" height="14" viewBox="0 0 12 12"><path d="M3 6h6m-3-3l3 3-3 3" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg width="16" height="16" viewBox="0 0 12 12" className="transition-transform duration-200 group-hover:translate-x-0.5"><path d="M3 6h6m-3-3l3 3-3 3" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </a>
             <a href="https://github.com/ozlabsai/VericodingEBM/blob/main/paper/main.pdf"
                target="_blank" rel="noreferrer"
-               className="press inline-flex items-center gap-1.5 px-4 py-3 rounded border border-line2 text-text1 hover:border-text2 hover:bg-bg1 text-[15px]">
+               className="press inline-flex items-center gap-1.5 px-5 py-3.5 rounded-md border border-line2 text-text1 hover:border-text2 hover:bg-bg1 text-[15px]">
               Read the paper
               <span className="font-mono text-[11px] text-text3">23pp</span>
             </a>
             <a href="https://huggingface.co/OzLabs/VericodingEBM"
                target="_blank" rel="noreferrer"
-               className="press inline-flex items-center px-4 py-3 rounded border border-line2 text-text1 hover:border-text2 hover:bg-bg1 text-[15px]">
+               className="press inline-flex items-center px-5 py-3.5 rounded-md border border-line2 text-text1 hover:border-text2 hover:bg-bg1 text-[15px]">
               HF weights
             </a>
           </div>

@@ -24,10 +24,11 @@ type Pin = {
 
 const PINS: Pin[] = [
   // Hybrid-Averse and EPA-Stack are only 5pp apart; stagger by stem length
-  // so labels don't collide.
+  // so labels don't collide. Sentinel-Reliant is the only "bad" state, so
+  // it gets the neg color; everything else is neutral with weight-emphasis.
   { name: 'Sentinel-Reliant',  delta: +47, side: 'bottom', variantClass: 'text-neg',    emphasis: true,  stem: 'tall'  },
-  { name: 'EPA-Stack',         delta: -47, side: 'top',    variantClass: 'text-text1',                   stem: 'short' },
-  { name: 'Hybrid-Averse',     delta: -52, side: 'top',    variantClass: 'text-accent', emphasis: true,  stem: 'tall'  },
+  { name: 'EPA-Stack',         delta: -47, side: 'top',    variantClass: 'text-text2',                   stem: 'short' },
+  { name: 'Hybrid-Averse',     delta: -52, side: 'top',    variantClass: 'text-text0',  emphasis: true,  stem: 'tall'  },
   { name: 'Frontier LLMs',     delta:   0, side: 'bottom', variantClass: 'text-text2',                   stem: 'tall'  },
 ]
 
@@ -55,18 +56,19 @@ export default function LandingRegimeFigure() {
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Three regime labels above the axis */}
+      {/* Three regime labels above the axis. Only the failure regime gets
+       *  color — others are weight/tone only. */}
       <div className="grid grid-cols-3 gap-2 mb-2 text-center font-mono text-[10px] uppercase tracking-[0.18em]">
-        <div className="text-accent">marker-averse<br/><span className="text-text3 normal-case tracking-normal">signal improves when marker stripped</span></div>
+        <div className="text-text0 font-medium">marker-averse<br/><span className="text-text3 font-normal normal-case tracking-normal">signal improves when marker stripped</span></div>
         <div className="text-text2">marker-invariant<br/><span className="text-text3 normal-case tracking-normal">±5pp swing</span></div>
-        <div className="text-neg">marker-reliant<br/><span className="text-text3 normal-case tracking-normal">signal collapses without marker</span></div>
+        <div className="text-neg font-medium">marker-reliant<br/><span className="text-text3 font-normal normal-case tracking-normal">signal collapses without marker</span></div>
       </div>
 
       {/* The axis itself: thick line with regime bands underneath */}
       <div className="relative h-44">
         {/* Regime bands */}
         <div className="absolute inset-x-0 top-[78px] h-2 flex">
-          <div className="flex-1 rounded-l bg-accent/15" />
+          <div className="flex-1 rounded-l bg-text0/8" />
           <div className="w-[40px] bg-text3/10" />
           <div className="flex-1 rounded-r bg-neg/15" />
         </div>
