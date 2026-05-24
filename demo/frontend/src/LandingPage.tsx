@@ -14,7 +14,7 @@ import LandingHeroFigure from './LandingHeroFigure'
 import HeroPerLineFigure from './HeroPerLineFigure'
 import TrainingArcFigure from './TrainingArcFigure'
 import LandingRegimeFigure from './LandingRegimeFigure'
-import AppNav from './AppNav'
+import AppNav, { withBase } from './AppNav'
 
 function useReveal<T extends HTMLElement>() {
   const ref = useRef<T>(null)
@@ -63,7 +63,7 @@ function Hero() {
             Verus toolchain in the loop.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <a href="/manifold"
+            <a href={withBase('/manifold')}
                className="press group inline-flex items-center gap-2 px-4 py-3 rounded-md bg-accent text-white hover:bg-accent-d font-medium text-[15px]">
               Open the demo
               <svg width="14" height="14" viewBox="0 0 12 12" className="transition-transform duration-200 group-hover:translate-x-0.5"><path d="M3 6h6m-3-3l3 3-3 3" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -103,7 +103,7 @@ function Hero() {
             <span className="text-line2">·</span>
             <span>hover the map</span>
             <span className="ml-auto">
-              <a href="/manifold" className="press text-text2 hover:text-text0">explore the manifold →</a>
+              <a href={withBase('/manifold')} className="press text-text2 hover:text-text0">explore the manifold →</a>
             </span>
           </div>
         </div>
@@ -330,7 +330,7 @@ function Closing() {
           The demo runs in your&nbsp;browser.<br/>
           <span className="text-text3 italic">No model load. No&nbsp;backend.</span>
         </h2>
-        <a href="/manifold"
+        <a href={withBase('/manifold')}
            className="press inline-flex items-center gap-2 px-4 py-3 rounded-md bg-accent text-white hover:bg-accent-d font-medium text-[15px] whitespace-nowrap">
           Open the demo
           <svg width="14" height="14" viewBox="0 0 12 12"><path d="M3 6h6m-3-3l3 3-3 3" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>

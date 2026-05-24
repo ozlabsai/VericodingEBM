@@ -4,7 +4,7 @@ import LineEditor from './LineEditor'
 import ExamplesPicker from './ExamplesPicker'
 import CorruptionLab from './CorruptionLab'
 import EnergyLegend from './EnergyLegend'
-import AppNav from './AppNav'
+import AppNav, { withBase } from './AppNav'
 import { fetchImpls, fetchLines, fetchImplDetail, IS_STATIC_MODE, type ImplPoint, type LinePoint, type ImplDetail, type ScoreLineResponse } from './api'
 
 const SAMPLE_SPEC = `// Returns the sum of two non-negative integers.

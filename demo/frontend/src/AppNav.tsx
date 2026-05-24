@@ -18,10 +18,18 @@ type Props = {
   meta?: ReactNode
 }
 
+/** Prefix an internal route with the Vite BASE_URL so links work both at
+ *  the dev/HF root (/) and under a GitHub Pages subpath (/VericodingEBM/). */
+export function withBase(path: string): string {
+  const base = ((import.meta as any).env?.BASE_URL ?? '/').replace(/\/+$/, '')
+  if (!path.startsWith('/')) path = '/' + path
+  return base + path
+}
+
 const ROUTES: { id: Route; href: string; label: string }[] = [
-  { id: 'manifold',    href: '/manifold',    label: 'manifold' },
-  { id: 'landscape',   href: '/landscape',   label: '2d' },
-  { id: 'landscape3d', href: '/landscape3d', label: '3d' },
+  { id: 'manifold',    href: withBase('/manifold'),    label: 'manifold' },
+  { id: 'landscape',   href: withBase('/landscape'),   label: '2d' },
+  { id: 'landscape3d', href: withBase('/landscape3d'), label: '3d' },
 ]
 
 function ExternalArrow() {
@@ -33,7 +41,7 @@ export default function AppNav({ active, controls, meta }: Props) {
     <header className="sticky top-0 z-30 backdrop-blur-md bg-bg0/75 hairline-b shrink-0">
       <div className="max-w-[1400px] mx-auto px-6 h-12 flex items-center gap-6">
         {/* Wordmark + section label */}
-        <a href="/" className="press flex items-baseline gap-2 group">
+        <a href={withBase('/')} className="press flex items-baseline gap-2 group">
           <span className="text-text0 text-sm font-medium tracking-crisp">Where to Look</span>
           <span className="font-mono text-[10px] tabular text-text3 group-hover:text-text2">
             {active === 'home' ? 'EBM · Verus' : active === 'landscape3d' ? 'landscape 3d' : active === 'landscape' ? 'landscape 2d' : active}
@@ -63,7 +71,7 @@ export default function AppNav({ active, controls, meta }: Props) {
 
         {/* External links — same set on every page */}
         <nav className="ml-auto flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-[0.14em]">
-          <a href="/" className={`press px-2.5 py-1 rounded ${active === 'home' ? 'text-text0' : 'text-text3 hover:text-text1'}`}>home</a>
+          <a href={withBase('/')} className={`press px-2.5 py-1 rounded ${active === 'home' ? 'text-text0' : 'text-text3 hover:text-text1'}`}>home</a>
           <span className="px-1 text-line2">·</span>
           <a href="https://github.com/ozlabsai/VericodingEBM" target="_blank" rel="noreferrer"
              className="press px-2.5 py-1 rounded text-text3 hover:text-text1">github<ExternalArrow /></a>

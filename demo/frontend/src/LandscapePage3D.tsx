@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import EnergyLandscape3D, { type Landscape3DExample } from './EnergyLandscape3D'
 import LineEditor from './LineEditor'
 import CorruptionLab from './CorruptionLab'
-import AppNav from './AppNav'
+import AppNav, { withBase } from './AppNav'
 import { fetchEnergyField, descend, IS_STATIC_MODE, type EnergyField, type ScoreLineResponse, type Trajectory } from './api'
 
 const SAMPLE_SPEC = `fn add(a: u32, b: u32) -> (s: u32)
