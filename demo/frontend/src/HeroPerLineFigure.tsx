@@ -140,10 +140,10 @@ export default function HeroPerLineFigure() {
               <button
                 key={i}
                 onClick={() => { setVIdx(i); setUserPaused(true) }}
-                className={`press inline-flex items-center gap-1.5 px-2.5 py-1 rounded font-mono text-[10px] uppercase tracking-[0.12em] border
+                className={`press inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[12px] border transition-colors
                   ${active
-                    ? 'border-text1 text-text0 bg-bg2'
-                    : 'border-line1 text-text3 hover:text-text2 hover:border-line2'}`}
+                    ? 'border-text1 text-text0 bg-bg2 font-medium'
+                    : 'border-line1 text-text2 hover:text-text0 hover:border-line2'}`}
               >
                 <span className={`inline-block w-1.5 h-1.5 rounded-full ${
                   v.kind === 'fail_original' ? 'bg-neg' :
@@ -180,7 +180,7 @@ export default function HeroPerLineFigure() {
           const topE = allFocusVariantEnergies.length ? Math.max(...allFocusVariantEnergies) : -Infinity
           const isTop = has && energy === topE
           return (
-            <div key={i} className="grid grid-cols-[24px_minmax(90px,140px)_1fr] gap-3 items-center py-[1px]">
+            <div key={i} className="grid grid-cols-[20px_minmax(70px,110px)_44px_1fr] gap-3 items-center py-[1px]">
               <span className="text-right text-text3/70 tabular text-[10px]">{i + 1}</span>
               <div className="relative h-3.5 bg-bg2 rounded-sm overflow-hidden border border-line1">
                 {has && (
@@ -192,12 +192,10 @@ export default function HeroPerLineFigure() {
                     }}
                   />
                 )}
-                {has && (
-                  <span className={`absolute inset-0 flex items-center justify-end pr-1.5 text-[9px] tabular font-medium ${isTop ? 'text-bg0' : 'text-text0'}`}>
-                    {energy!.toFixed(2)}
-                  </span>
-                )}
               </div>
+              <span className={`tabular text-[11px] text-right ${has ? (isTop ? 'text-text0 font-medium' : 'text-text1') : 'text-text3/50'}`}>
+                {has ? energy!.toFixed(2) : '·'}
+              </span>
               <span className={`truncate whitespace-pre ${isTop ? 'text-text0 font-medium' : has ? 'text-text2' : 'text-text3/60'}`}>
                 {row.text || ' '}
               </span>
@@ -209,19 +207,19 @@ export default function HeroPerLineFigure() {
       {/* BOTTOM — summary + delta */}
       <div className="px-5 py-3 hairline-t flex items-baseline gap-4 flex-wrap">
         <div className="flex items-baseline gap-2">
-          <span className={`font-mono text-[10px] uppercase tracking-[0.14em] ${meta.tone}`}>{meta.tag}</span>
-          <span className="font-mono text-[10px] text-text3">whole-impl E</span>
-          <span className="tabular text-text0 text-lg">{focusV.whole_impl_energy.toFixed(2)}</span>
+          <span className={`text-[12px] font-medium ${meta.tone}`}>{meta.tag}</span>
+          <span className="text-text3 text-[12px]">whole-impl E</span>
+          <span className="tabular text-text0 text-lg font-display tracking-tight">{focusV.whole_impl_energy.toFixed(2)}</span>
         </div>
         {focusV.kind !== 'fail_original' && Math.abs(delta) > 0.01 && (
-          <div className="flex items-baseline gap-1">
-            <span className="font-mono text-[10px] text-text3">Δ vs FAIL</span>
-            <span className={`tabular text-sm ${delta < 0 ? 'text-pos' : 'text-neg'}`}>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-text3 text-[12px]">Δ vs FAIL</span>
+            <span className={`tabular text-sm font-medium ${delta < 0 ? 'text-pos' : 'text-neg'}`}>
               {delta < 0 ? '↓' : '↑'}{Math.abs(delta).toFixed(2)}
             </span>
           </div>
         )}
-        <div className="ml-auto font-mono text-[10px] text-text3 max-w-md text-right leading-snug">
+        <div className="ml-auto text-text3 text-[12px] max-w-md text-right leading-snug">
           {focusV.note}
         </div>
       </div>
